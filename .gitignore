@@ -38,6 +38,7 @@ venv.bak/
 .env.test.local
 .env.production.local
 .env.example
+upwork_web_app/.env
 
 # IDE
 .vscode/
@@ -59,6 +60,7 @@ Thumbs.db
 *.log
 logs/
 log/
+upwork_web_app/logs/
 
 # Database
 *.db
@@ -149,4 +151,71 @@ cache/
 
 # Local development
 local/
-dev/ 
+dev/
+
+# Additional patterns found in project
+*.pid
+*.sock
+.coverage.*
+htmlcov/
+.tox/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# SSL certificates (except system ones)
+*.crt
+*.cert
+*.p12
+*.pfx
+
+# API keys and tokens
+*_key
+*_token
+*_secret
+api_keys.json
+tokens.json
+
+# Local configuration
+local_config.py
+local_settings.py
+settings_local.py
+
+# Database migrations (if using custom migrations)
+migrations/
+alembic/versions/
+
+# Backup and archive files
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# IDE specific
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# OS specific (extended)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary and swap files
+*~
+*.swp
+*.swo
+*.tmp
+*.temp 
