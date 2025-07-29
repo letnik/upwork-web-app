@@ -9,11 +9,12 @@
 ```
 work_results/
 ├── README.md                                    # Цей файл
-├── newspaper_structure_implementation_report_2024-12-19.md
-├── frontend_completion_report_2024-12-19.md
-├── testing_and_frontend_progress_report_2024-12-19.md
-├── documentation_oauth_update_report_2024-12-19.md
-├── newspaper_structure_update_report_2024-12-19.md
+├── 0001-newspaper-reorganization-report.md
+├── 0002-newspaper-structure-update-report.md
+├── 0003-newspaper-structure-implementation-report.md
+├── 0004-documentation-oauth-update-report.md
+├── 0005-frontend-completion-report.md
+├── 0006-testing-and-frontend-progress-report.md
 └── ...
 ```
 
@@ -202,6 +203,27 @@ work_results/
 - ✅ Конструктивним (як вирішили)
 - ✅ Результативним (що отримали)
 - ✅ Корисним для майбутнього (досвід)
+
+## 📋 **Система нумерації**
+
+### **Формат назви файлу:**
+```
+0001-назва-файлу.md
+0002-назва-файлу.md
+0003-назва-файлу.md
+...
+```
+
+### **Правила:**
+- **ID**: 4-значний номер, починаючи з 0001
+- **Назва**: описова назва з дефісами замість пробілів
+- **Розширення**: .md
+- **Порядок**: за датою створення
+
+### **Приклади:**
+- `0001-newspaper-reorganization-report.md`
+- `0002-newspaper-structure-update-report.md`
+- `0003-newspaper-structure-implementation-report.md`
 
 ---
 
