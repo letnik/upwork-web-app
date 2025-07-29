@@ -291,4 +291,7 @@ Thumbs.db
 sessions/
 exports/
 data/
-logs/ 
+logs/
+
+# Project specific - internal notes and reports
+docs/newspaper/ 
