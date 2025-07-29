@@ -15,6 +15,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'shared'))
 
 from shared.config.settings import settings
 from shared.config.logging import setup_logging, get_logger
+from shared.utils.rate_limiter import rate_limit_middleware
+from shared.utils.validation_middleware import validation_middleware_handler
+from shared.utils.auth_middleware import auth_middleware_handler
 
 # Налаштування логування
 setup_logging(service_name="api-gateway")
@@ -35,6 +38,33 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Додаємо middleware для безпеки
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    """Middleware для безпеки (rate limiting, validation, auth)"""
+    try:
+        # 1. Rate limiting
+        await rate_limit_middleware(request, call_next)
+        
+        # 2. Validation
+        await validation_middleware_handler(request, call_next)
+        
+        # 3. Authentication
+        await auth_middleware_handler(request, call_next)
+        
+        # Виконуємо запит
+        response = await call_next(request)
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Помилка middleware безпеки: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Помилка обробки запиту"
+        )
 
 # HTTP клієнт для запитів до мікросервісів
 http_client = httpx.AsyncClient(timeout=30.0)
