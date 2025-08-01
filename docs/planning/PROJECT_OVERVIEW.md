@@ -97,6 +97,17 @@ AI-асистент, який автоматизує всі ці процеси 
         [Upwork Module](details/modules/upwork_integration/upwork_integration_module.md)
         [Upwork Plan](details/modules/upwork_integration/implementation_plan.md)
 
+### **🔐 OAuth 2.0 "Sign in with Upwork"**
+- Вхід через Upwork акаунт без створення нового
+        [Auth Module](details/modules/auth/auth_module.md)
+        [Security Module](details/modules/security/security_module.md)
+- Автоматичне отримання доступу до Upwork профілю
+        [Upwork Module](details/modules/upwork_integration/upwork_integration_module.md)
+- Безпечна авторизація через OAuth 2.0
+        [Security Module](details/modules/security/security_module.md)
+- Збереження Upwork токенів для API доступу
+        [Auth Module](details/modules/auth/auth_module.md)
+
 ### ** Мобільний досвід**
 - Повна адаптація під мобільні пристрої
         [Web Interface Module](details/modules/web_interface/web_interface_module.md)

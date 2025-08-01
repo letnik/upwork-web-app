@@ -1,300 +1,563 @@
-# API специфікації
+# API Специфікації
 
-> **Детальні специфікації REST API для Upwork Web App**
+## Огляд
 
----
+Цей документ містить детальні специфікації всіх API endpoints проекту Upwork AI Assistant.
 
-## Зміст
+## Базові принципи
 
-1. [Огляд API](#-огляд-api)
-2. [Аутентифікація](#аутентифікація)
-3. [Endpoints](#-endpoints)
-4. [Моделі даних](#-моделі-даних)
-5. [Помилки](#помилки)
-6. [Rate Limiting](#rate-limiting)
-7. [Документація](#документація)
-
----
-
-## Огляд API
-
-### Принципи дизайну
-- [ ] **API-DESIGN-001**: RESTful архітектура
-- [ ] **API-DESIGN-002**: JSON як формат даних
-- [ ] **API-DESIGN-003**: Версіонування через URL
-- [ ] **API-DESIGN-004**: Стандартні HTTP коди відповіді
-- [ ] **API-DESIGN-005**: Консистентна структура відповідей
-
-### Базовий URL
+### Аутентифікація
+Всі API endpoints (крім публічних) вимагають JWT токен в заголовку:
 ```
-Production: https://api.upwork-web-app.com/v1
-Staging: https://staging-api.upwork-web-app.com/v1
-Development: http://localhost:8000/v1
+Authorization: Bearer <jwt_token>
 ```
 
-### Формат відповідей
+### Формат відповіді
+Всі відповіді повертаються в JSON форматі:
 ```json
 {
   "success": true,
   "data": {...},
   "message": "Success message",
-  "timestamp": "2024-12-19T17:50:00Z",
-  "version": "1.0"
+  "timestamp": "2024-12-19T18:00:00Z"
 }
 ```
 
----
-
-## Аутентифікація
-
-### JWT токени
-- [ ] **API-AUTH-001**: Bearer токени в Authorization header
-- [ ] **API-AUTH-002**: Access токени з терміном дії 15 хвилин
-- [ ] **API-AUTH-003**: Refresh токени з терміном дії 7 днів
-- [ ] **API-AUTH-004**: Автоматичне оновлення токенів
-- [ ] **API-AUTH-005**: Валідація токенів на кожному запиті
-
-### OAuth 2.0
-- [ ] **API-OAUTH-001**: PKCE flow для безпеки
-- [ ] **API-OAUTH-002**: State параметр для CSRF захисту
-- [ ] **API-OAUTH-003**: Secure redirect URIs
-- [ ] **API-OAUTH-004**: Обробка помилок автентифікації
-- [ ] **API-OAUTH-005**: Логування OAuth подій
-
-### MFA підтримка
-- [ ] **API-MFA-001**: TOTP верифікація для критичних операцій
-- [ ] **API-MFA-002**: Backup коди для відновлення
-- [ ] **API-MFA-003**: SMS аутентифікація (опціонально)
-- [ ] **API-MFA-004**: Налаштування MFA через API
-- [ ] **API-MFA-005**: Вимкнення MFA через API
-
----
-
-## Endpoints
-
-### Аутентифікація
-- [ ] **POST /auth/register** - реєстрація користувача
-- [ ] **POST /auth/login** - вхід користувача
-- [ ] **POST /auth/logout** - вихід користувача
-- [ ] **POST /auth/refresh** - оновлення токенів
-- [ ] **GET /auth/profile** - отримання профілю
-
-### OAuth з Upwork
-- [ ] **GET /auth/upwork/init** - ініціалізація OAuth flow
-- [ ] **GET /auth/upwork/callback** - обробка OAuth callback
-- [ ] **POST /auth/upwork/refresh** - оновлення Upwork токенів
-- [ ] **DELETE /auth/upwork/revoke** - відкликання токенів
-
-### MFA
-- [ ] **POST /auth/mfa/setup** - налаштування MFA
-- [ ] **POST /auth/mfa/verify** - верифікація MFA коду
-- [ ] **POST /auth/mfa/disable** - вимкнення MFA
-- [ ] **GET /auth/mfa/backup-codes** - генерація backup кодів
-
-### Вакансії
-- [ ] **GET /jobs** - список вакансій
-- [ ] **GET /jobs/{id}** - деталі вакансії
-- [ ] **POST /jobs/search** - пошук вакансій
-- [ ] **GET /jobs/favorites** - улюблені вакансії
-- [ ] **POST /jobs/{id}/favorite** - додати в улюблені
-
-### Пропозиції
-- [ ] **GET /proposals** - список пропозицій
-- [ ] **POST /proposals** - створення пропозиції
-- [ ] **GET /proposals/{id}** - деталі пропозиції
-- [ ] **PUT /proposals/{id}** - оновлення пропозиції
-- [ ] **DELETE /proposals/{id}** - видалення пропозиції
-
-### AI функціональність
-- [ ] **POST /ai/generate-proposal** - генерація пропозиції
-- [ ] **POST /ai/analyze-job** - аналіз вакансії
-- [ ] **POST /ai/filter-jobs** - розумна фільтрація
-- [ ] **POST /ai/predict-success** - прогнозування успіху
-- [ ] **GET /ai/templates** - шаблони пропозицій
-
-### Контракти
-- [ ] **GET /contracts** - список контрактів
-- [ ] **GET /contracts/{id}** - деталі контракту
-- [ ] **GET /contracts/{id}/payments** - платежі по контракту
-- [ ] **GET /contracts/{id}/time** - час роботи по контракту
-
-### Аналітика
-- [ ] **GET /analytics/overview** - загальна аналітика
-- [ ] **GET /analytics/proposals** - аналітика пропозицій
-- [ ] **GET /analytics/earnings** - аналітика доходів
-- [ ] **GET /analytics/performance** - метрики продуктивності
-- [ ] **GET /analytics/reports** - звіти
-
-### Налаштування
-- [ ] **GET /settings** - отримання налаштувань
-- [ ] **PUT /settings** - оновлення налаштувань
-- [ ] **GET /settings/notifications** - налаштування сповіщень
-- [ ] **PUT /settings/notifications** - оновлення сповіщень
-- [ ] **GET /settings/security** - налаштування безпеки
-
----
-
-## Моделі даних
-
-### Користувач
-```json
-{
-  "id": "string",
-  "email": "string",
-  "name": "string",
-  "avatar": "string",
-  "timezone": "string",
-  "language": "string",
-  "created_at": "datetime",
-  "updated_at": "datetime",
-  "mfa_enabled": "boolean",
-  "upwork_connected": "boolean"
-}
-```
-
-### Вакансія
-```json
-{
-  "id": "string",
-  "title": "string",
-  "description": "string",
-  "budget": {
-    "min": "number",
-    "max": "number",
-    "type": "string"
-  },
-  "skills": ["string"],
-  "client": {
-    "id": "string",
-    "name": "string",
-    "rating": "number",
-    "total_spent": "number"
-  },
-  "posted_at": "datetime",
-  "deadline": "datetime",
-  "proposals_count": "number",
-  "is_favorite": "boolean"
-}
-```
-
-### Пропозиція
-```json
-{
-  "id": "string",
-  "job_id": "string",
-  "cover_letter": "string",
-  "bid_amount": "number",
-  "estimated_duration": "number",
-  "status": "string",
-  "created_at": "datetime",
-  "updated_at": "datetime",
-  "ai_generated": "boolean"
-}
-```
-
-### Контракт
-```json
-{
-  "id": "string",
-  "job_id": "string",
-  "client_id": "string",
-  "title": "string",
-  "rate": "number",
-  "rate_type": "string",
-  "status": "string",
-  "start_date": "datetime",
-  "end_date": "datetime",
-  "total_earnings": "number"
-}
-```
-
----
-
-## Помилки
-
-### Стандартні HTTP коди
-- [ ] **200** - Успішна операція
-- [ ] **201** - Ресурс створено
-- [ ] **400** - Неправильний запит
-- [ ] **401** - Не авторизовано
-- [ ] **403** - Заборонено
-- [ ] **404** - Не знайдено
-- [ ] **429** - Забагато запитів
-- [ ] **500** - Внутрішня помилка сервера
-
-### Формат помилок
+### Обробка помилок
 ```json
 {
   "success": false,
   "error": {
-    "code": "string",
-    "message": "string",
-    "details": "object",
-    "timestamp": "datetime"
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": {...}
+  },
+  "timestamp": "2024-12-19T18:00:00Z"
+}
+```
+
+## AI Service API
+
+### Налаштування AI
+
+#### Отримання налаштувань AI
+```http
+GET /api/ai/settings
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "ai_disclosure": {
+      "enabled": true,
+      "position": "end",
+      "template": "default",
+      "custom_text": "",
+      "auto_add": true
+    },
+    "editing": {
+      "auto_save": true,
+      "save_interval": 30,
+      "draft_retention": 7,
+      "validation": {
+        "min_length": 100,
+        "max_length": 2000,
+        "check_spam": true,
+        "require_review": true
+      }
+    }
   }
 }
 ```
 
-### Коди помилок
-- [ ] **AUTH_001** - Неправильні облікові дані
-- [ ] **AUTH_002** - Токен закінчився
-- [ ] **AUTH_003** - MFA потрібна
-- [ ] **AUTH_004** - Недостатньо прав
-- [ ] **VALIDATION_001** - Неправильні дані
-- [ ] **RATE_LIMIT_001** - Перевищено ліміт запитів
-- [ ] **UPWORK_001** - Помилка Upwork API
-- [ ] **AI_001** - Помилка AI сервісу
+#### Оновлення налаштувань AI
+```http
+PUT /api/ai/settings
+```
 
----
+**Тіло запиту:**
+```json
+{
+  "ai_disclosure": {
+    "enabled": true,
+    "position": "end",
+    "template": "detailed",
+    "custom_text": "Custom disclosure text",
+    "auto_add": true
+  },
+  "editing": {
+    "auto_save": true,
+    "save_interval": 60,
+    "draft_retention": 14,
+    "validation": {
+      "min_length": 150,
+      "max_length": 2500,
+      "check_spam": true,
+      "require_review": true
+    }
+  }
+}
+```
 
-## ⏱ Rate Limiting
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Settings updated successfully",
+    "settings": {...}
+  }
+}
+```
 
-### Обмеження
-- [ ] **API-RATE-001**: 100 запитів/хвилину для авторизованих користувачів
-- [ ] **API-RATE-002**: 10 запитів/хвилину для неавторизованих користувачів
-- [ ] **API-RATE-003**: 1000 запитів/день на користувача
-- [ ] **API-RATE-004**: 50 запитів/хвилину для AI endpoints
-- [ ] **API-RATE-005**: 20 запитів/хвилину для OAuth endpoints
+#### Скидання налаштувань до за замовчуванням
+```http
+POST /api/ai/settings/reset
+```
 
-### Headers
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Settings reset to default",
+    "settings": {...}
+  }
+}
+```
+
+### Генерація відгуків
+
+#### Генерація відгуку
+```http
+POST /api/ai/generate-proposal
+```
+
+**Тіло запиту:**
+```json
+{
+  "job_id": "~0123456789012345",
+  "user_profile": {
+    "skills": ["python", "django"],
+    "experience_years": 5,
+    "hourly_rate": 35
+  },
+  "template_type": "professional",
+  "tone": "friendly",
+  "include_disclosure": true
+}
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "proposal_id": "prop_123",
+    "content": "Generated proposal content...",
+    "ai_disclosure": "AI disclosure text...",
+    "full_content": "Complete proposal with disclosure",
+    "word_count": 250,
+    "estimated_cost": 0.045,
+    "generated_at": "2024-12-19T18:00:00Z"
+  }
+}
+```
+
+### Управління чернетками
+
+#### Збереження чернетки
+```http
+POST /api/ai/drafts
+```
+
+**Тіло запиту:**
+```json
+{
+  "job_id": "~0123456789012345",
+  "content": "Proposal content...",
+  "ai_generated_content": "Original AI content...",
+  "user_edited_content": "User modifications...",
+  "ai_disclosure_included": true
+}
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "draft_id": "draft_456",
+    "saved_at": "2024-12-19T18:00:00Z",
+    "word_count": 300
+  }
+}
+```
+
+#### Отримання чернетки
+```http
+GET /api/ai/drafts/{draft_id}
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "draft_id": "draft_456",
+    "job_id": "~0123456789012345",
+    "content": "Current proposal content...",
+    "ai_generated_content": "Original AI content...",
+    "user_edited_content": "User modifications...",
+    "ai_disclosure_included": true,
+    "validation_status": "valid",
+    "validation_errors": [],
+    "created_at": "2024-12-19T17:30:00Z",
+    "updated_at": "2024-12-19T18:00:00Z",
+    "last_edited_at": "2024-12-19T18:00:00Z"
+  }
+}
+```
+
+#### Оновлення чернетки
+```http
+PUT /api/ai/drafts/{draft_id}
+```
+
+**Тіло запиту:**
+```json
+{
+  "content": "Updated proposal content...",
+  "user_edited_content": "New user modifications...",
+  "ai_disclosure_included": true
+}
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "draft_id": "draft_456",
+    "updated_at": "2024-12-19T18:15:00Z",
+    "word_count": 350
+  }
+}
+```
+
+#### Список чернеток користувача
+```http
+GET /api/ai/drafts
+```
+
+**Параметри запиту:**
+- `page` (int): Номер сторінки (за замовчуванням: 1)
+- `limit` (int): Кількість записів на сторінку (за замовчуванням: 10)
+- `status` (string): Фільтр за статусом ("draft", "ready", "sent")
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "drafts": [
+      {
+        "draft_id": "draft_456",
+        "job_id": "~0123456789012345",
+        "job_title": "Python Developer Needed",
+        "content_preview": "First 100 characters...",
+        "word_count": 350,
+        "validation_status": "valid",
+        "created_at": "2024-12-19T17:30:00Z",
+        "updated_at": "2024-12-19T18:15:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 25,
+      "pages": 3
+    }
+  }
+}
+```
+
+### Валідація відгуків
+
+#### Валідація відгуку
+```http
+POST /api/ai/validate-proposal
+```
+
+**Тіло запиту:**
+```json
+{
+  "content": "Proposal content to validate...",
+  "job_id": "~0123456789012345",
+  "ai_disclosure_included": true
+}
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_valid": true,
+    "validation_status": "valid",
+    "errors": [],
+    "warnings": [
+      "Content is quite short, consider adding more details"
+    ],
+    "suggestions": [
+      "Add specific examples of your work",
+      "Mention relevant experience with similar projects"
+    ],
+    "word_count": 250,
+    "readability_score": 85,
+    "spam_score": 0.02
+  }
+}
+```
+
+### Відправка відгуків
+
+#### Відправка відгуку
+```http
+POST /api/ai/send-proposal
+```
+
+**Тіло запиту:**
+```json
+{
+  "draft_id": "draft_456",
+  "job_id": "~0123456789012345",
+  "final_content": "Final proposal content...",
+  "bid_amount": 1500,
+  "estimated_duration": "2-3 weeks",
+  "cover_letter": "Cover letter content...",
+  "attachments": []
+}
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "proposal_id": "prop_789",
+    "upwork_proposal_id": "~0123456789012346",
+    "sent_at": "2024-12-19T18:30:00Z",
+    "status": "submitted",
+    "estimated_response_time": "2-3 days"
+  }
+}
+```
+
+## Upwork Service API
+
+### Пошук вакансій
+
+#### Пошук вакансій
+```http
+GET /api/upwork/jobs/search
+```
+
+**Параметри запиту:**
+- `q` (string): Пошуковий запит
+- `category` (string): Категорія вакансій
+- `job_type` (string): Тип роботи ("hourly", "fixed")
+- `budget_min` (int): Мінімальний бюджет
+- `budget_max` (int): Максимальний бюджет
+- `experience_level` (string): Рівень досвіду
+- `page` (int): Номер сторінки
+- `limit` (int): Кількість результатів
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "jobs": [
+      {
+        "id": "~0123456789012345",
+        "title": "Python Developer Needed",
+        "description": "Job description...",
+        "budget": {
+          "min": 1000,
+          "max": 5000,
+          "type": "fixed"
+        },
+        "client": {
+          "id": "~0123456789012346",
+          "name": "Tech Solutions Inc",
+          "rating": 4.8,
+          "reviews_count": 15
+        },
+        "skills": ["python", "django", "postgresql"],
+        "posted_time": "2024-12-19T10:30:00Z",
+        "proposals_count": 8,
+        "url": "https://www.upwork.com/jobs/~0123456789012345"
+      }
+    ],
+    "pagination": {
+      "total": 1500,
+      "page": 1,
+      "limit": 20,
+      "pages": 75
+    }
+  }
+}
+```
+
+#### Отримання деталей вакансії
+```http
+GET /api/upwork/jobs/{job_id}
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "~0123456789012345",
+    "title": "Python Developer Needed",
+    "description": "Detailed job description...",
+    "budget": {
+      "min": 1000,
+      "max": 5000,
+      "type": "fixed"
+    },
+    "client": {
+      "id": "~0123456789012346",
+      "name": "Tech Solutions Inc",
+      "rating": 4.8,
+      "reviews_count": 15,
+      "total_spent": 50000,
+      "location": "United States"
+    },
+    "skills": ["python", "django", "postgresql"],
+    "posted_time": "2024-12-19T10:30:00Z",
+    "category": "Web Development",
+    "subcategory": "Web Programming",
+    "experience_level": "intermediate",
+    "project_length": "3-6 months",
+    "hours_per_week": "10-30 hrs/week",
+    "proposals_count": 8,
+    "client_hires": 5,
+    "payment_verified": true,
+    "url": "https://www.upwork.com/jobs/~0123456789012345"
+  }
+}
+```
+
+## Analytics Service API
+
+### Аналіз ефективності
+
+#### Аналіз ефективності відгуків
+```http
+GET /api/analytics/proposals/effectiveness
+```
+
+**Параметри запиту:**
+- `date_from` (string): Початкова дата (YYYY-MM-DD)
+- `date_to` (string): Кінцева дата (YYYY-MM-DD)
+- `group_by` (string): Групування ("day", "week", "month")
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "data": {
+    "total_proposals": 45,
+    "responses_received": 12,
+    "response_rate": 26.67,
+    "hires_received": 3,
+    "hire_rate": 6.67,
+    "average_response_time": "2.5 days",
+    "top_performing_templates": [
+      {
+        "template": "professional",
+        "response_rate": 35.0,
+        "hire_rate": 10.0
+      }
+    ],
+    "ai_disclosure_impact": {
+      "with_disclosure": {
+        "response_rate": 28.0,
+        "hire_rate": 7.0
+      },
+      "without_disclosure": {
+        "response_rate": 25.0,
+        "hire_rate": 6.0
+      }
+    }
+  }
+}
+```
+
+## Коди помилок
+
+### Загальні помилки
+- `AUTHENTICATION_FAILED` - Помилка аутентифікації
+- `AUTHORIZATION_FAILED` - Помилка авторизації
+- `VALIDATION_ERROR` - Помилка валідації
+- `RATE_LIMIT_EXCEEDED` - Перевищення ліміту запитів
+- `INTERNAL_SERVER_ERROR` - Внутрішня помилка сервера
+
+### AI Service помилки
+- `AI_GENERATION_FAILED` - Помилка генерації AI
+- `AI_SETTINGS_INVALID` - Невірні налаштування AI
+- `DRAFT_NOT_FOUND` - Чернетка не знайдена
+- `PROPOSAL_VALIDATION_FAILED` - Помилка валідації відгуку
+- `UPWORK_API_ERROR` - Помилка API Upwork
+
+### Upwork Service помилки
+- `UPWORK_AUTH_FAILED` - Помилка авторизації Upwork
+- `UPWORK_RATE_LIMIT` - Перевищення ліміту Upwork
+- `JOB_NOT_FOUND` - Вакансія не знайдена
+- `PROPOSAL_SUBMISSION_FAILED` - Помилка відправки відгуку
+
+## Rate Limiting
+
+### Ліміти запитів
+- **AI генерація**: 100 запитів/годину
+- **Upwork API**: 1000 запитів/день
+- **Валідація**: 500 запитів/годину
+- **Аналітика**: 200 запитів/годину
+
+### Заголовки rate limiting
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1640995200
+X-RateLimit-Reset: 1640000000
 ```
 
-### Обробка перевищення ліміту
-- [ ] **API-RATE-006**: HTTP 429 статус код
-- [ ] **API-RATE-007**: Retry-After header
-- [ ] **API-RATE-008**: Логування перевищень
-- [ ] **API-RATE-009**: Сповіщення адміністраторів
-- [ ] **API-RATE-010**: Автоматичне відновлення після блокування
+## Версіонування API
 
----
+### Поточна версія
+- **Версія**: v1
+- **Статус**: Beta
+- **Дата релізу**: 2024-12-19
+
+### Плани версіонування
+- **v1.1**: Додавання нових AI моделей
+- **v1.2**: Розширення аналітики
+- **v2.0**: Повна переробка API
 
 ## Документація
 
-### OpenAPI/Swagger
-- [ ] **API-DOC-001**: Автоматична генерація документації
-- [ ] **API-DOC-002**: Інтерактивна документація
-- [ ] **API-DOC-003**: Приклади запитів та відповідей
-- [ ] **API-DOC-004**: Опис всіх моделей даних
-- [ ] **API-DOC-005**: Коди помилок та їх значення
+### Swagger/OpenAPI
+API документація доступна за адресою:
+```
+GET /api/docs
+```
 
 ### Postman Collection
-- [ ] **API-DOC-006**: Готові колекції для тестування
-- [ ] **API-DOC-007**: Environment змінні
-- [ ] **API-DOC-008**: Приклади для всіх endpoints
-- [ ] **API-DOC-009**: Автоматичні тести
-- [ ] **API-DOC-010**: Документація для розробників
-
-### SDK та клієнти
-- [ ] **API-DOC-011**: Python SDK
-- [ ] **API-DOC-012**: JavaScript SDK
-- [ ] **API-DOC-013**: PHP SDK
-- [ ] **API-DOC-014**: Go SDK
-- [ ] **API-DOC-015**: .NET SDK
-
----
-
-**Версія**: 1.0.0 
+Колекція Postman доступна для імпорту:
+```
+GET /api/postman-collection.json
+``` 

@@ -12,10 +12,10 @@ import sys
 import os
 
 # Додаємо шлях до спільних компонентів
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'config'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from config.settings import settings
-from config.logging import get_logger
+from shared.config.settings import settings
+from shared.config.logging import get_logger
 
 logger = get_logger("rate-limiter")
 
@@ -207,6 +207,48 @@ class RateLimiter:
             return 3600
         else:
             return 60
+    
+    def allow_request(self, key: str, max_requests: int, window: int) -> bool:
+        """
+        Простий метод для перевірки rate limit
+        
+        Args:
+            key: Унікальний ключ для rate limiting
+            max_requests: Максимальна кількість запитів
+            window: Вікно часу в секундах
+            
+        Returns:
+            True якщо запит дозволений, False якщо перевищено ліміт
+        """
+        if not self.redis_client:
+            # Якщо Redis недоступний, дозволяємо всі запити
+            return True
+        
+        current_time = int(time.time())
+        window_time = current_time - (current_time % window)
+        redis_key = f"rate_limit:{key}:{window_time}"
+        
+        try:
+            # Отримуємо поточну кількість запитів
+            current_count = self.redis_client.get(redis_key)
+            current_count = int(current_count) if current_count else 0
+            
+            # Перевіряємо чи не перевищено ліміт
+            if current_count >= max_requests:
+                return False
+            
+            # Збільшуємо лічильник
+            pipe = self.redis_client.pipeline()
+            pipe.incr(redis_key)
+            pipe.expire(redis_key, window)
+            pipe.execute()
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Помилка rate limiting: {e}")
+            # У випадку помилки дозволяємо запит
+            return True
 
 
 # Глобальний екземпляр rate limiter

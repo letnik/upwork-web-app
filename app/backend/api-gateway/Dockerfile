@@ -9,14 +9,17 @@ RUN apt-get update && apt-get install -y \
 # Встановлюємо робочу директорію
 WORKDIR /app
 
-# Копіюємо файли залежностей
-COPY requirements.txt .
+# Копіюємо централізовані файли залежностей
+COPY requirements/base.txt requirements/
+COPY requirements/api-gateway.txt requirements/
 
 # Встановлюємо Python залежності
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements/base.txt -r requirements/api-gateway.txt
 
-# Копіюємо код сервісу
-COPY src/ ./src/
+# Копіюємо код API Gateway
+COPY app/backend/api-gateway/src/ ./src/
+COPY app/backend/shared/ ./shared/
+COPY app/backend/api-gateway/src/routers/ ./src/routers/
 
 # Створюємо директорію для логів
 RUN mkdir -p logs

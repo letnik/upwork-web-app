@@ -1,0 +1,59 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push Docker images
+      run: |
+        docker build -t upwork-ai-assistant/api-gateway:latest app/backend/api-gateway/
+        docker build -t upwork-ai-assistant/auth-service:latest app/backend/services/auth-service/
+        docker build -t upwork-ai-assistant/upwork-service:latest app/backend/services/upwork-service/
+        docker build -t upwork-ai-assistant/ai-service:latest app/backend/services/ai-service/
+        docker build -t upwork-ai-assistant/analytics-service:latest app/backend/services/analytics-service/
+        docker build -t upwork-ai-assistant/notification-service:latest app/backend/services/notification-service/
+        
+        docker push upwork-ai-assistant/api-gateway:latest
+        docker push upwork-ai-assistant/auth-service:latest
+        docker push upwork-ai-assistant/upwork-service:latest
+        docker push upwork-ai-assistant/ai-service:latest
+        docker push upwork-ai-assistant/analytics-service:latest
+        docker push upwork-ai-assistant/notification-service:latest
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Тут можна додати команди для deployment на staging
+        # Наприклад, використання kubectl, docker-compose, або інших інструментів
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    needs: deploy-staging
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Тут можна додати команди для deployment на production
+        # Наприклад, використання kubectl, docker-compose, або інших інструментів 

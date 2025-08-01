@@ -11,10 +11,10 @@ import sys
 import os
 
 # Додаємо шлях до спільних компонентів
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'config'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from config.settings import settings
-from config.logging import get_logger
+from shared.config.settings import settings
+from shared.config.logging import get_logger
 
 logger = get_logger("validation-middleware")
 

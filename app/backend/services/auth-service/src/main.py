@@ -7,19 +7,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 import sys
 import os
 
 # Додаємо шлях до спільних компонентів
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'shared'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 from shared.config.settings import settings
 from shared.config.logging import setup_logging, get_logger
 from shared.database.connection import get_db, db_manager
+from shared.utils.oauth_manager import oauth_manager
 from .models import User, UserSecurity, Role
 from .oauth import router as oauth_router
+
 from .mfa import router as mfa_router
 from .jwt_manager import router as jwt_router
+from .password_reset import router as password_reset_router
+from .session_manager import router as session_manager_router
 
 # Налаштування логування
 setup_logging(service_name="auth-service")
@@ -43,13 +49,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Pydantic моделі
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    first_name: str = None
+    last_name: str = None
+
 # Security
 security = HTTPBearer()
 
 # Підключаємо роутери
 app.include_router(oauth_router, prefix="/auth/oauth", tags=["OAuth"])
+
 app.include_router(mfa_router, prefix="/auth/mfa", tags=["MFA"])
 app.include_router(jwt_router, prefix="/auth/jwt", tags=["JWT"])
+app.include_router(password_reset_router, prefix="/auth/password", tags=["Password Reset"])
+app.include_router(session_manager_router, prefix="/auth/sessions", tags=["Session Management"])
 
 
 @app.on_event("startup")
@@ -96,76 +116,95 @@ async def health_check():
     }
 
 
+@app.get("/test")
+async def test_endpoint():
+    """Тестовий endpoint без бази даних"""
+    return {
+        "message": "Auth service is working!",
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@app.post("/auth/login-test", tags=["Authentication"])
+async def login_user_test(credentials: LoginRequest):
+    """Тестовий endpoint для входу без БД"""
+    return {
+        "access_token": "test_token_123",
+        "refresh_token": "test_refresh_123",
+        "token_type": "bearer",
+        "user": {
+            "id": 1,
+            "email": credentials.email,
+            "first_name": "Test",
+            "last_name": "User",
+            "mfa_enabled": False
+        }
+    }
+
+
 @app.post("/auth/register", tags=["Authentication"])
 async def register_user(
-    email: str,
-    password: str,
-    first_name: str = None,
-    last_name: str = None,
+    user_data: RegisterRequest,
     db: Session = Depends(get_db)
 ):
-    """
-    Реєстрація нового користувача
-    
-    Args:
-        email: Email користувача
-        password: Пароль
-        first_name: Ім'я
-        last_name: Прізвище
-        db: Сесія БД
-    """
+    """Реєстрація нового користувача"""
     try:
         # Перевіряємо чи користувач вже існує
-        existing_user = db.query(User).filter(User.email == email).first()
+        existing_user = db.query(User).filter(User.email == user_data.email).first()
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Користувач з таким email вже існує"
+                detail="Користувач з такою email адресою вже існує"
             )
         
-        # Створюємо нового користувача
+        # Хешуємо пароль
         from shared.utils.encryption import hash_password
+        hashed_password = hash_password(user_data.password)
         
-        hashed_password = hash_password(password)
-        
-        user = User(
-            email=email,
+        # Створюємо користувача
+        new_user = User(
+            email=user_data.email,
             password_hash=hashed_password,
-            first_name=first_name,
-            last_name=last_name,
+            first_name=user_data.first_name,
+            last_name=user_data.last_name,
             is_active=True,
-            created_at=datetime.utcnow()
+            is_verified=False,
+            role_id=1  # Default role
         )
         
-        db.add(user)
+        db.add(new_user)
         db.commit()
-        db.refresh(user)
+        db.refresh(new_user)
         
-        # Створюємо запис безпеки
+        # Створюємо запис безпеки для користувача
+        from .models import UserSecurity
         user_security = UserSecurity(
-            user_id=user.id,
+            user_id=new_user.id,
             mfa_enabled=False,
-            mfa_secret=None,
-            failed_login_attempts=0,
-            last_login=None,
-            created_at=datetime.utcnow()
+            failed_login_attempts=0
         )
-        
         db.add(user_security)
         db.commit()
         
-        logger.info(f"✅ Користувач зареєстрований: {email}")
+        logger.info(f"✅ Користувач зареєстрований: {user_data.email}")
         
         return {
             "message": "Користувач успішно зареєстрований",
-            "user_id": user.id,
-            "email": user.email
+            "user_id": new_user.id,
+            "email": new_user.email,
+            "status": "pending_verification"
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Помилка реєстрації: {e}")
+        logger.error(f"❌ Помилка реєстрації користувача: {e}")
+        # Правильна обробка сесії БД
+        try:
+            db.rollback()
+        except:
+            pass
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Помилка реєстрації користувача"
@@ -174,57 +213,42 @@ async def register_user(
 
 @app.post("/auth/login", tags=["Authentication"])
 async def login_user(
-    email: str,
-    password: str,
+    credentials: LoginRequest,
     db: Session = Depends(get_db)
 ):
-    """
-    Вхід користувача в систему
-    
-    Args:
-        email: Email користувача
-        password: Пароль
-        db: Сесія БД
-    """
+    """Авторизація користувача"""
     try:
         # Знаходимо користувача
-        user = db.query(User).filter(User.email == email).first()
+        user = db.query(User).filter(User.email == credentials.email).first()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Невірний email або пароль"
+                detail="Неправильний email або пароль"
+            )
+        
+        # Перевіряємо чи користувач активний
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Обліковий запис деактивовано"
             )
         
         # Перевіряємо пароль
         from shared.utils.encryption import verify_password
-        
-        if not verify_password(password, user.password_hash):
-            # Оновлюємо лічильник невдалих спроб
-            user_security = db.query(UserSecurity).filter(
-                UserSecurity.user_id == user.id
-            ).first()
-            
+        if not verify_password(credentials.password, user.password_hash):
+            # Збільшуємо лічильник невдалих спроб
+            user_security = db.query(UserSecurity).filter(UserSecurity.user_id == user.id).first()
             if user_security:
                 user_security.failed_login_attempts += 1
                 db.commit()
             
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Невірний email або пароль"
+                detail="Неправильний email або пароль"
             )
         
-        # Перевіряємо чи користувач активний
-        if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Користувач заблокований"
-            )
-        
-        # Оновлюємо інформацію про вхід
-        user_security = db.query(UserSecurity).filter(
-            UserSecurity.user_id == user.id
-        ).first()
-        
+        # Скидаємо лічильник невдалих спроб
+        user_security = db.query(UserSecurity).filter(UserSecurity.user_id == user.id).first()
         if user_security:
             user_security.failed_login_attempts = 0
             user_security.last_login = datetime.utcnow()
@@ -233,10 +257,10 @@ async def login_user(
         # Генеруємо JWT токени
         from .jwt_manager import create_access_token, create_refresh_token
         
-        access_token = create_access_token(data={"sub": str(user.id)})
-        refresh_token = create_refresh_token(data={"sub": str(user.id)})
+        access_token = create_access_token(data={"sub": user.email, "user_id": user.id})
+        refresh_token = create_refresh_token(data={"sub": user.email, "user_id": user.id})
         
-        logger.info(f"✅ Користувач увійшов: {email}")
+        logger.info(f"✅ Користувач авторизований: {user.email}")
         
         return {
             "access_token": access_token,
@@ -247,6 +271,7 @@ async def login_user(
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
+                "is_verified": user.is_verified,
                 "mfa_enabled": user_security.mfa_enabled if user_security else False
             }
         }
@@ -254,10 +279,10 @@ async def login_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Помилка входу: {e}")
+        logger.error(f"❌ Помилка авторизації: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Помилка входу в систему"
+            detail="Помилка авторизації"
         )
 
 
@@ -318,6 +343,11 @@ async def get_user_profile(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Помилка отримання профілю"
         )
+
+
+# ============================================================================
+# OAuth 2.0 Endpoints для Upwork (видалено - використовуємо існуючий роутер)
+# ============================================================================
 
 
 if __name__ == "__main__":

@@ -72,6 +72,132 @@ CREATE TABLE user_tokens (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Профілі фільтрів
+CREATE TABLE filter_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    keywords TEXT[], -- ключові слова для пошуку
+    exclude_keywords TEXT[], -- мінус-слова
+    ai_instructions TEXT, -- AI інструкції природною мовою
+    budget_min DECIMAL(10,2),
+    budget_max DECIMAL(10,2),
+    hourly_rate_min DECIMAL(10,2),
+    hourly_rate_max DECIMAL(10,2),
+    experience_level VARCHAR(50), -- 'entry', 'intermediate', 'expert'
+    job_type VARCHAR(50), -- 'fixed', 'hourly'
+    categories TEXT[], -- категорії роботи
+    countries TEXT[], -- країни
+    working_hours JSONB, -- години роботи
+    timezone VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
+    is_paused BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Шаблони відгуків
+CREATE TABLE proposal_templates (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    category VARCHAR(50), -- 'general', 'web_dev', 'mobile_dev', 'design'
+    content TEXT NOT NULL,
+    variables JSONB, -- змінні в шаблоні
+    style VARCHAR(50), -- 'formal', 'friendly', 'technical'
+    success_rate DECIMAL(5,2), -- відсоток успішності
+    total_uses INTEGER DEFAULT 0,
+    successful_uses INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- A/B тестування
+CREATE TABLE ab_tests (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    template_a_id INTEGER REFERENCES proposal_templates(id),
+    template_b_id INTEGER REFERENCES proposal_templates(id),
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP,
+    min_duration_days INTEGER DEFAULT 7,
+    status VARCHAR(50) DEFAULT 'active', -- 'active', 'completed', 'stopped'
+    results JSONB, -- результати тестування
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Чернетки відгуків
+CREATE TABLE proposal_drafts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    job_id INTEGER REFERENCES jobs(id),
+    title VARCHAR(500),
+    content TEXT NOT NULL,
+    template_id INTEGER REFERENCES proposal_templates(id),
+    status VARCHAR(50) DEFAULT 'draft', -- 'draft', 'sent', 'rejected'
+    rejection_reason TEXT,
+    delay_sent_at TIMESTAMP, -- затримка 1 хвилина перед відправкою
+    daily_proposal_count INTEGER DEFAULT 0, -- лічильник відгуків за день
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Сповіщення
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL, -- 'telegram', 'push', 'email'
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB, -- додаткові дані
+    is_read BOOLEAN DEFAULT FALSE,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Налаштування сповіщень
+CREATE TABLE notification_settings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    telegram_enabled BOOLEAN DEFAULT FALSE,
+    telegram_chat_id VARCHAR(100),
+    push_enabled BOOLEAN DEFAULT TRUE,
+    email_enabled BOOLEAN DEFAULT FALSE,
+    quiet_hours_start TIME,
+    quiet_hours_end TIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Аналітика
+CREATE TABLE analytics (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    proposals_sent INTEGER DEFAULT 0,
+    responses_received INTEGER DEFAULT 0,
+    hired_count INTEGER DEFAULT 0,
+    earnings DECIMAL(10,2) DEFAULT 0,
+    template_performance JSONB, -- успішність шаблонів
+    profile_performance JSONB, -- ефективність профілів
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Резервні копії
+CREATE TABLE backups (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    file_size BIGINT,
+    backup_type VARCHAR(50), -- 'automatic', 'manual'
+    status VARCHAR(50) DEFAULT 'completed', -- 'in_progress', 'completed', 'failed'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Вакансії
 CREATE TABLE jobs (
     id SERIAL PRIMARY KEY,

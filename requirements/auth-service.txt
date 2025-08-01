@@ -1,0 +1,10 @@
+# Специфічні залежності для Auth Service
+# Цей файл містить тільки унікальні залежності для Auth Service
+# Базові залежності встановлюються з base.txt
+
+# Додаткові залежності для безпеки
+bcrypt==4.1.2
+cryptography==41.0.7
+
+# MFA (Multi-Factor Authentication)
+pyotp==2.9.0

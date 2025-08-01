@@ -136,6 +136,15 @@ git push origin feature/AI-001-openai-integration
 # Перейдіть на GitHub та створіть PR
 ```
 
+### **Frontend інтеграція**
+- [OAuth Frontend Integration Guide](details/guides/development/oauth_frontend_integration.md) - Інструкція для інтеграції OAuth з фронтендом
+
+### **Безпека тестів**
+- [Test Security Guide](details/guides/development/test_security_guide.md) - Гайд з безпеки тестів
+
+### **Git Workflow**
+- [Основні інструкції для AI](../instruction_ai/AI_CORE_INSTRUCTIONS.md) - Правила комітів та пушів
+
 ### **Стандарти коду**
 ```python
 # Python - PEP 8

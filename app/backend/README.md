@@ -20,11 +20,11 @@
 
 ### 🔒 Безпека
 
-- JWT токени для API аутентифікації
-- MFA (Multi-Factor Authentication)
-- OAuth 2.0 для Upwork інтеграції
-- Шифрування чутливих даних
-- Rate limiting
+- JWT токени для API аутентифікації ✅
+- MFA (Multi-Factor Authentication) ✅
+- OAuth 2.0 для Upwork інтеграції 🚧
+- Шифрування чутливих даних ✅
+- Rate limiting ✅
 
 ## 🚀 Швидкий старт
 
@@ -40,7 +40,7 @@
 1. **Клонування репозиторію:**
 ```bash
 git clone <repository-url>
-cd upwork/app/backend
+cd upwork
 ```
 
 2. **Налаштування змінних середовища:**
@@ -51,7 +51,7 @@ cp .env.example .env
 
 3. **Запуск з Docker Compose:**
 ```bash
-docker-compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 4. **Перевірка статусу:**
@@ -93,7 +93,7 @@ app/backend/
 │   ├── config/           # Налаштування
 │   ├── database/         # Підключення до БД
 │   └── utils/            # Утиліти
-├── docker-compose.yml    # Docker Compose конфігурація
+# Docker конфігурації перенесено в docker/
 └── README.md
 ```
 
@@ -200,38 +200,40 @@ app/backend/
 ### Unit Tests
 
 ```bash
-# Тестування Auth Service
-cd services/auth-service
-pytest
+# Всі backend тести (з кореневої папки)
+npm run test:backend
+# або
+./tools/scripts/run_tests.sh backend
 
-# Тестування Upwork Service
-cd services/upwork-service
-pytest
-
-# Тестування AI Service
-cd services/ai-service
-pytest
+# Конкретні сервіси
+cd services/auth-service && pytest
+cd services/upwork-service && pytest
+cd services/ai-service && pytest
 ```
 
 ### Integration Tests
 
 ```bash
-# Тестування API Gateway
-cd api-gateway
-pytest tests/integration/
-
-# Тестування мікросервісів
-cd services
-pytest tests/integration/
+# Integration тести (з кореневої папки)
+npm run test:integration
+# або
+./tools/scripts/run_tests.sh integration
 ```
 
 ### End-to-End Tests
 
 ```bash
-# E2E тести
-cd tests/e2e
-pytest
+# E2E тести (з кореневої папки)
+npm run test:e2e
+# або
+./tools/scripts/run_tests.sh e2e
 ```
+
+### Документація тестів
+
+- **[Централізована документація тестів](../../tests/README.md)**
+- **[Backend тести](../../tests/unit/backend/README.md)**
+- **[Детальний огляд всіх тестів](../../docs/TESTS_OVERVIEW.md)**
 
 ## 🚀 Розгортання
 

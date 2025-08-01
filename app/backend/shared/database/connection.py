@@ -2,7 +2,7 @@
 Спільне підключення до бази даних для всіх мікросервісів
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
@@ -93,9 +93,22 @@ class DatabaseManager:
         """Тестування підключення до БД"""
         try:
             with self.engine.connect() as conn:
-                conn.execute("SELECT 1")
+                result = conn.execute(text("SELECT 1"))
+                result.fetchone()
             return True
-        except Exception:
+        except Exception as e:
+            print(f"Database connection test failed: {e}")
+            return False
+    
+    def test_redis_connection(self) -> bool:
+        """Тестування підключення до Redis"""
+        try:
+            if self.redis_client:
+                self.redis_client.ping()
+                return True
+            return False
+        except Exception as e:
+            print(f"Redis connection test failed: {e}")
             return False
     
     def test_redis_connection(self) -> bool:

@@ -1,0 +1,179 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build: ../app/backend/api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/upwork_app
+      - REDIS_URL=redis://redis:6379
+      - AUTH_SERVICE_URL=http://auth-service:8001
+      - UPWORK_SERVICE_URL=http://upwork-service:8002
+      - AI_SERVICE_URL=http://ai-service:8003
+      - ANALYTICS_SERVICE_URL=http://analytics-service:8004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8005
+    depends_on:
+      - postgres
+      - redis
+      - auth-service
+      - upwork-service
+      - ai-service
+      - analytics-service
+      - notification-service
+    networks:
+      - upwork-network
+    volumes:
+      - ../app/backend/shared:/app/shared
+
+  # Auth Service
+  auth-service:
+    build: ../app/backend/services/auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/upwork_app
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-change-in-production}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-encryption-key-change-in-production}
+      - UPWORK_CLIENT_ID=${UPWORK_CLIENT_ID}
+      - UPWORK_CLIENT_SECRET=${UPWORK_CLIENT_SECRET}
+      - UPWORK_CALLBACK_URL=${UPWORK_CALLBACK_URL:-http://localhost:8000/auth/upwork/callback}
+      - ENVIRONMENT=production
+      - DEBUG=false
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - upwork-network
+    volumes:
+      - ../app/backend/logs/auth:/app/logs
+      - ../app/backend/shared:/app/shared
+
+  # Upwork Service
+  upwork-service:
+    build: ../app/backend/services/upwork-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/upwork_app
+      - REDIS_URL=redis://redis:6379
+      - UPWORK_CLIENT_ID=${UPWORK_CLIENT_ID}
+      - UPWORK_CLIENT_SECRET=${UPWORK_CLIENT_SECRET}
+      - ENVIRONMENT=development
+      - DEBUG=true
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - upwork-network
+    volumes:
+      - ../app/backend/logs/upwork:/app/logs
+      - ../app/backend/shared:/app/shared
+      - ../app/backend/data:/app/data
+
+  # AI Service
+  ai-service:
+    build: ../app/backend/services/ai-service
+    ports:
+      - "8003:8003"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - ENVIRONMENT=production
+      - DEBUG=false
+    depends_on:
+      - redis
+    networks:
+      - upwork-network
+    volumes:
+      - ../app/backend/logs/ai:/app/logs
+      - ../app/backend/shared:/app/shared
+
+  # Analytics Service
+  analytics-service:
+    build: ../app/backend/services/analytics-service
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/upwork_app
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=production
+      - DEBUG=false
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - upwork-network
+    volumes:
+      - ../app/backend/logs/analytics:/app/logs
+      - ../app/backend/shared:/app/shared
+
+  # Notification Service
+  notification-service:
+    build: ../app/backend/services/notification-service
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - ENVIRONMENT=production
+      - DEBUG=false
+    depends_on:
+      - redis
+    networks:
+      - upwork-network
+    volumes:
+      - ../app/backend/logs/notification:/app/logs
+      - ../app/backend/shared:/app/shared
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=upwork_app
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../app/backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - upwork-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - upwork-network
+
+  # Nginx (для production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - api-gateway
+    networks:
+      - upwork-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  upwork-network:
+    driver: bridge

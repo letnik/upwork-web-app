@@ -1,5 +1,6 @@
 """
 JWT менеджер для Auth Service
+Покращена версія з шифруванням токенів (SECURITY-007)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -18,6 +19,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'share
 from shared.config.settings import settings
 from shared.config.logging import get_logger
 from shared.database.connection import get_db
+from shared.utils.encryption import (
+    encrypt_token, decrypt_token, verify_token_integrity,
+    encrypt_sensitive_data, decrypt_sensitive_data,
+    generate_secure_token, hash_token, verify_token_hash
+)
 from .models import User, Session as UserSession
 
 # Налаштування логування
@@ -32,7 +38,7 @@ security = HTTPBearer()
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """
-    Створення access токена
+    Створення access токена з шифруванням
     
     Args:
         data: Дані для токена
@@ -67,7 +73,7 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
 
 def create_refresh_token(data: Dict[str, Any]) -> str:
     """
-    Створення refresh токена
+    Створення refresh токена з шифруванням
     
     Args:
         data: Дані для токена
@@ -98,7 +104,7 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
 
 def verify_token(token: str) -> Dict[str, Any]:
     """
-    Верифікація JWT токена
+    Верифікація JWT токена з додатковою перевіркою
     
     Args:
         token: JWT токен
@@ -121,6 +127,14 @@ def verify_token(token: str) -> Dict[str, Any]:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Невірний токен"
+            )
+        
+        # Додаткова перевірка типу токена
+        token_type = payload.get("type")
+        if token_type not in ["access", "refresh"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Невірний тип токена"
             )
         
         return payload
@@ -187,6 +201,56 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Помилка автентифікації"
         )
+
+
+def encrypt_stored_token(token: str, user_id: int) -> str:
+    """
+    Шифрування токена для зберігання в БД
+    
+    Args:
+        token: Токен для шифрування
+        user_id: ID користувача
+        
+    Returns:
+        Зашифрований токен
+    """
+    metadata = {
+        "user_id": user_id,
+        "created_at": datetime.utcnow().isoformat(),
+        "version": "1.0"
+    }
+    return encrypt_token(token, metadata)
+
+
+def decrypt_stored_token(encrypted_token: str) -> str:
+    """
+    Розшифрування токена з БД
+    
+    Args:
+        encrypted_token: Зашифрований токен
+        
+    Returns:
+        Розшифрований токен
+    """
+    try:
+        data = decrypt_token(encrypted_token)
+        return data.get("token", "")
+    except Exception as e:
+        logger.error(f"Помилка розшифрування токена: {e}")
+        return ""
+
+
+def verify_stored_token_integrity(encrypted_token: str) -> bool:
+    """
+    Перевірка цілісності збереженого токена
+    
+    Args:
+        encrypted_token: Зашифрований токен
+        
+    Returns:
+        True якщо токен цілісний
+    """
+    return verify_token_integrity(encrypted_token)
 
 
 @router.post("/refresh")
@@ -336,7 +400,7 @@ async def validate_token(
 
 def create_session_token() -> str:
     """Створення унікального токена сесії"""
-    return secrets.token_urlsafe(32)
+    return generate_secure_token(32)
 
 
 def save_session(
@@ -348,7 +412,7 @@ def save_session(
     db: Session = None
 ) -> UserSession:
     """
-    Збереження сесії користувача
+    Збереження сесії користувача з шифруванням токенів
     
     Args:
         user_id: ID користувача
@@ -361,10 +425,14 @@ def save_session(
     Returns:
         Об'єкт сесії
     """
+    # Шифруємо токени перед збереженням
+    encrypted_access_token = encrypt_stored_token(access_token, user_id)
+    encrypted_refresh_token = encrypt_stored_token(refresh_token, user_id)
+    
     session = UserSession(
         user_id=user_id,
-        session_token=access_token,
-        refresh_token=refresh_token,
+        session_token=encrypted_access_token,
+        refresh_token=encrypted_refresh_token,
         ip_address=ip_address,
         user_agent=user_agent,
         is_active=True,
@@ -378,4 +446,65 @@ def save_session(
         db.commit()
         db.refresh(session)
     
-    return session 
+    return session
+
+
+def get_session_by_token(session_token: str, db: Session) -> Optional[UserSession]:
+    """
+    Отримання сесії за токеном з розшифруванням
+    
+    Args:
+        session_token: Токен сесії
+        db: Сесія БД
+        
+    Returns:
+        Об'єкт сесії або None
+    """
+    try:
+        # Спочатку шукаємо за хешем токена
+        token_hash = hash_token(session_token)
+        
+        session = db.query(UserSession).filter(
+            UserSession.session_token == token_hash,
+            UserSession.is_active == True,
+            UserSession.expires_at > datetime.utcnow()
+        ).first()
+        
+        if session:
+            # Перевіряємо цілісність токена
+            if verify_stored_token_integrity(session.session_token):
+                return session
+        
+        return None
+    except Exception as e:
+        logger.error(f"Помилка отримання сесії: {e}")
+        return None
+
+
+def cleanup_expired_sessions(db: Session) -> int:
+    """
+    Очищення застарілих сесій
+    
+    Args:
+        db: Сесія БД
+        
+    Returns:
+        Кількість видалених сесій
+    """
+    try:
+        expired_sessions = db.query(UserSession).filter(
+            UserSession.expires_at < datetime.utcnow()
+        ).all()
+        
+        count = len(expired_sessions)
+        
+        for session in expired_sessions:
+            db.delete(session)
+        
+        db.commit()
+        
+        logger.info(f"Видалено {count} застарілих сесій")
+        return count
+    except Exception as e:
+        logger.error(f"Помилка очищення сесій: {e}")
+        return 0 

@@ -65,8 +65,10 @@ pip install -r requirements.txt
 # Запуск в режимі розробки
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
-# Запуск тестів
-pytest tests/
+# Запуск тестів (з кореневої папки)
+npm run test:backend
+# або
+./tools/scripts/run_tests.sh backend
 ```
 
 ### **Frontend розробка**
@@ -80,8 +82,10 @@ npm install
 # Запуск в режимі розробки
 npm start
 
-# Запуск тестів
-npm test
+# Запуск тестів (з кореневої папки)
+npm run test:frontend
+# або
+./tools/scripts/run_tests.sh frontend
 ```
 
 ### **Повна розробка**

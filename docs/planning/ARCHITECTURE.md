@@ -55,7 +55,9 @@
           │           │           │           │
 ┌─────────▼─────────┐ │ ┌─────────▼─────────┐ │ ┌─────────────────┐
 │   Auth Service    │ │ │  Upwork Service   │ │ │  AI Service     │
-│   (JWT/OAuth)     │ │ │  (API Integration)│ │ │ (OpenAI/Claude) │
+│   (JWT/OAuth 2.0) │ │ │  (API Integration)│ │ │ (OpenAI/Claude) │
+│   "Sign in with   │ │ │  "Sign in with    │ │ │                 │
+│    Upwork"        │ │ │   Upwork"         │ │ │                 │
 └───────────────────┘ │ └───────────────────┘ │ └─────────────────┘
                       │                       │
 ┌─────────────────────▼───────────────────────▼───────────────────┐
@@ -261,8 +263,6 @@ settings (user_id, ai_preferences, notification_settings)
         [Security Architecture](details/architecture/security_architecture.md)
         [Security Module](details/modules/security/security_module.md)
         [Security Plan](details/modules/security/implementation_plan.md)
-        [Security Audit](../newspaper/report/security_audit_report_v1.0.0.md)
-        [Security Improvement Plan](../newspaper/report/security_improvement_plan_v1.0.0.md)
 
 ### **Аутентифікація та авторизація**
 - **JWT tokens** для API access

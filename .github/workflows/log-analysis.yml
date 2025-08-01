@@ -1,0 +1,396 @@
+name: Log Analysis and Monitoring
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Щоденний аналіз о 02:00 UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  analyze-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+          pip install psutil cryptography
+          
+      - name: Run tests with enhanced logging
+        run: |
+          cd app/backend
+          python -m pytest tests/ --log-cli-level=INFO --log-cli-format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        env:
+          ENVIRONMENT: test
+          LOG_LEVEL: DEBUG
+          
+      - name: Analyze test logs
+        run: |
+          cd app/backend
+          python -c "
+          from shared.utils.log_analyzer import LogAnalyzer
+          analyzer = LogAnalyzer('logs')
+          summary = analyzer.get_comprehensive_summary(hours=1)
+          print('Log Analysis Summary:')
+          print(json.dumps(summary, indent=2))
+          "
+          
+      - name: Check for critical errors
+        run: |
+          cd app/backend
+          python -c "
+          import json
+          from shared.utils.log_analyzer import LogAnalyzer
+          analyzer = LogAnalyzer('logs')
+          errors = analyzer.get_error_summary(hours=1)
+          critical_errors = [e for e in errors if 'CRITICAL' in e.get('level', '')]
+          if critical_errors:
+              print('Critical errors found:')
+              print(json.dumps(critical_errors, indent=2))
+              exit(1)
+          else:
+              print('No critical errors found')
+          "
+          
+      - name: Check performance metrics
+        run: |
+          cd app/backend
+          python -c "
+          import json
+          from shared.utils.log_analyzer import LogAnalyzer
+          analyzer = LogAnalyzer('logs')
+          performance = analyzer.get_performance_summary(hours=1)
+          slow_ops = analyzer.find_slow_operations(threshold_ms=1000.0)
+          if slow_ops:
+              print('Slow operations detected:')
+              print(json.dumps(slow_ops, indent=2))
+          else:
+              print('No slow operations detected')
+          "
+          
+      - name: Generate log report
+        run: |
+          cd app/backend
+          python -c "
+          import json
+          from datetime import datetime
+          from shared.utils.log_analyzer import LogAnalyzer
+          analyzer = LogAnalyzer('logs')
+          summary = analyzer.get_comprehensive_summary(hours=1)
+          report = {
+              'timestamp': datetime.utcnow().isoformat(),
+              'summary': summary,
+              'recommendations': []
+          }
+          
+          # Додаємо рекомендації
+          if summary.get('error_count', 0) > 10:
+              report['recommendations'].append('High error rate detected - review error handling')
+          
+          if summary.get('slow_operations_count', 0) > 5:
+              report['recommendations'].append('Multiple slow operations detected - optimize performance')
+          
+          if summary.get('security_events_count', 0) > 0:
+              report['recommendations'].append('Security events detected - review security logs')
+          
+          with open('log_analysis_report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+          "
+          
+      - name: Upload log report
+        uses: actions/upload-artifact@v3
+        with:
+          name: log-analysis-report
+          path: app/backend/log_analysis_report.json
+          
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('app/backend/log_analysis_report.json', 'utf8'));
+            
+            let comment = '## 📊 Log Analysis Report\n\n';
+            comment += `**Analysis Period:** ${report.summary.period_hours} hours\n`;
+            comment += `**Total Log Entries:** ${report.summary.total_entries}\n`;
+            comment += `**Error Count:** ${report.summary.error_count}\n`;
+            comment += `**Security Events:** ${report.summary.security_events_count}\n`;
+            comment += `**Slow Operations:** ${report.summary.slow_operations_count}\n\n`;
+            
+            if (report.recommendations.length > 0) {
+              comment += '### ⚠️ Recommendations\n\n';
+              report.recommendations.forEach(rec => {
+                comment += `- ${rec}\n`;
+              });
+            } else {
+              comment += '### ✅ No issues detected\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+          
+      - name: Security log analysis
+        run: |
+          cd app/backend
+          python -c "
+          import json
+          from shared.utils.log_analyzer import LogAnalyzer
+          analyzer = LogAnalyzer('logs')
+          security_summary = analyzer.get_security_summary(hours=24)
+          
+          print('Security Analysis:')
+          print(json.dumps(security_summary, indent=2))
+          
+          # Перевірка на підозрілі події
+          suspicious_events = [e for e in security_summary.get('events', []) 
+                             if 'failed_login' in e.get('message', '').lower() 
+                             or 'unauthorized' in e.get('message', '').lower()]
+          
+          if suspicious_events:
+              print('Suspicious security events detected:')
+              print(json.dumps(suspicious_events, indent=2))
+              exit(1)
+          else:
+              print('No suspicious security events detected')
+          "
+          
+      - name: Check for sensitive data exposure
+        run: |
+          cd app/backend
+          python -c "
+          import re
+          import os
+          
+          sensitive_patterns = [
+              r'password\s*[:=]\s*["\'][^"\']+["\']',
+              r'secret\s*[:=]\s*["\'][^"\']+["\']',
+              r'token\s*[:=]\s*["\'][^"\']+["\']',
+              r'api_key\s*[:=]\s*["\'][^"\']+["\']'
+          ]
+          
+          exposed_sensitive = False
+          
+          for root, dirs, files in os.walk('logs'):
+              for file in files:
+                  if file.endswith('.log'):
+                      filepath = os.path.join(root, file)
+                      try:
+                          with open(filepath, 'r', encoding='utf-8') as f:
+                              content = f.read()
+                              for pattern in sensitive_patterns:
+                                  if re.search(pattern, content, re.IGNORECASE):
+                                      print(f'Sensitive data found in {filepath}')
+                                      exposed_sensitive = True
+                      except Exception as e:
+                          print(f'Error reading {filepath}: {e}')
+          
+          if exposed_sensitive:
+              exit(1)
+          else:
+              print('No sensitive data exposure detected')
+          "
+
+  performance-monitoring:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+          pip install psutil
+          
+      - name: Performance analysis
+        run: |
+          cd app/backend
+          python -c "
+          import json
+          from shared.utils.log_analyzer import LogAnalyzer
+          analyzer = LogAnalyzer('logs')
+          performance_summary = analyzer.get_performance_summary(hours=24)
+          
+          print('Performance Analysis:')
+          print(json.dumps(performance_summary, indent=2))
+          
+          # Перевірка на проблеми продуктивності
+          avg_response_time = performance_summary.get('avg_response_time_ms', 0)
+          max_response_time = performance_summary.get('max_response_time_ms', 0)
+          
+          if avg_response_time > 1000:  # > 1 секунди
+              print(f'High average response time: {avg_response_time}ms')
+              exit(1)
+          
+          if max_response_time > 5000:  # > 5 секунд
+              print(f'Very slow response detected: {max_response_time}ms')
+              exit(1)
+          
+          print('Performance metrics are within acceptable ranges')
+          "
+          
+      - name: Generate performance report
+        run: |
+          cd app/backend
+          python -c "
+          import json
+          from datetime import datetime
+          from shared.utils.log_analyzer import LogAnalyzer
+          analyzer = LogAnalyzer('logs')
+          performance = analyzer.get_performance_summary(hours=24)
+          
+          report = {
+              'timestamp': datetime.utcnow().isoformat(),
+              'performance_metrics': performance,
+              'slow_operations': analyzer.find_slow_operations(threshold_ms=1000.0),
+              'recommendations': []
+          }
+          
+          # Додаємо рекомендації
+          if performance.get('avg_response_time_ms', 0) > 500:
+              report['recommendations'].append('Consider optimizing average response time')
+          
+          if performance.get('max_response_time_ms', 0) > 2000:
+              report['recommendations'].append('Investigate slow operations')
+          
+          with open('performance_report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+          "
+          
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: app/backend/performance_report.json
+
+  cleanup-old-logs:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+          
+      - name: Cleanup old logs
+        run: |
+          cd app/backend
+          python -c "
+          from shared.utils.log_cleanup_service import log_cleanup_service
+          
+          print('Starting log cleanup...')
+          stats = log_cleanup_service.cleanup_old_logs()
+          print(f'Cleanup completed: {stats}')
+          
+          # Архівування логів
+          archive_stats = log_cleanup_service.archive_logs()
+          print(f'Archiving completed: {archive_stats}')
+          
+          # Резервне копіювання
+          backup_stats = log_cleanup_service.backup_logs()
+          print(f'Backup completed: {backup_stats}')
+          "
+          
+      - name: Report cleanup results
+        run: |
+          cd app/backend
+          python -c "
+          from shared.utils.log_cleanup_service import log_cleanup_service
+          
+          stats = log_cleanup_service.get_cleanup_stats()
+          print('Cleanup Statistics:')
+          print(f'Logs directory size: {stats.get(\"logs_directory_size\", 0)} bytes')
+          print(f'Archive directory size: {stats.get(\"archive_directory_size\", 0)} bytes')
+          print(f'Backup directory size: {stats.get(\"backup_directory_size\", 0)} bytes')
+          print(f'Total log files: {stats.get(\"total_log_files\", 0)}')
+          print(f'Total archive files: {stats.get(\"total_archive_files\", 0)}')
+          print(f'Total backup files: {stats.get(\"total_backup_files\", 0)}')
+          "
+
+  alert-on-issues:
+    runs-on: ubuntu-latest
+    needs: [analyze-logs, security-scan, performance-monitoring]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: log-analysis-report
+          
+      - name: Send alerts
+        run: |
+          python -c "
+          import json
+          import os
+          
+          # Перевіряємо результати попередніх jobs
+          analyze_failed = '${{ needs.analyze-logs.result }}' == 'failure'
+          security_failed = '${{ needs.security-scan.result }}' == 'failure'
+          performance_failed = '${{ needs.performance-monitoring.result }}' == 'failure'
+          
+          if analyze_failed or security_failed or performance_failed:
+              print('🚨 Issues detected in log analysis!')
+              
+              if analyze_failed:
+                  print('- Log analysis found critical errors')
+              
+              if security_failed:
+                  print('- Security scan detected suspicious activity')
+              
+              if performance_failed:
+                  print('- Performance monitoring detected issues')
+              
+              # Тут можна додати відправку сповіщень
+              # (email, Slack, Telegram тощо)
+              
+          else:
+              print('✅ All checks passed successfully')
+          " 

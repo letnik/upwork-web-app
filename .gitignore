@@ -51,6 +51,16 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Тестові артефакти та безпека
+tests/artifacts/
+tests/logs/
+tests/temp/
+*.test.log
+test_secrets.json
+test_tokens.txt
+.env.test
+.env.local
+
 # Translations
 *.mo
 *.pot
@@ -189,6 +199,12 @@ out/
 logs
 *.log
 
+# Backend logs and data
+logs/
+exports/
+sessions/
+*.log
+
 # Runtime data
 pids
 *.pid
@@ -294,4 +310,138 @@ data/
 logs/
 
 # Project specific - internal notes and reports
-docs/newspaper/ 
+docs/newspaper/
+
+# Additional cache and temporary files
+.pytest_cache/
+.coverage
+.coverage.*
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+temp/
+tmp/ 
+
+# Additional cache and temporary files
+.pytest_cache/
+.coverage
+.coverage.*
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+temp/
+tmp/ 

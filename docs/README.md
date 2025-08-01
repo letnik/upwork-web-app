@@ -135,6 +135,8 @@ docs/
 - [🔌 API ДОВІДНИК](planning/details/technical_details/api/) - Повна API документація
 - [📝 ПРИКЛАДИ](planning/details/technical_details/api/) - Приклади використання
 - [🧪 ТЕСТУВАННЯ](planning/details/testing/) - Тестування API
+- [🧪 ЦЕНТРАЛІЗОВАНІ ТЕСТИ](../tests/README.md) - Всі тести проекту
+- [📊 ОГЛЯД ТЕСТІВ](../docs/TESTS_OVERVIEW.md) - Детальний огляд тестів
 
 ### ** Аналіз та звіти**
 - [📰 НОВИНИ](newspaper/README.md) - Останні зміни

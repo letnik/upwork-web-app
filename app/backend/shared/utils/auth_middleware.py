@@ -11,12 +11,11 @@ import sys
 import os
 
 # Додаємо шлях до спільних компонентів
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'config'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'database'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from config.settings import settings
-from config.logging import get_logger
-from database.connection import get_db
+from shared.config.settings import settings
+from shared.config.logging import get_logger
+from shared.database.connection import get_db
 
 logger = get_logger("auth-middleware")
 
@@ -56,14 +55,25 @@ class AuthMiddleware:
         Returns:
             True якщо шлях публічний
         """
-        # Перевіряємо точний збіг
-        if path in self.public_paths:
+        # Спеціальна обробка для auth шляхів
+        if path.startswith("/auth/"):
             return True
         
-        # Перевіряємо префікси
-        for public_path in self.public_paths:
-            if path.startswith(public_path):
-                return True
+        # Спеціальна обробка для docs шляхів
+        if path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json"):
+            return True
+        
+        # Спеціальна обробка для health шляху
+        if path == "/health":
+            return True
+        
+        # Спеціальна обробка для кореневого шляху (тільки точний збіг)
+        if path == "/":
+            return True
+        
+        # Перевіряємо точний збіг з публічними шляхами
+        if path in self.public_paths:
+            return True
         
         return False
     
@@ -116,7 +126,7 @@ class AuthMiddleware:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Токен застарів"
             )
-        except jwt.JWTError:
+        except jwt.DecodeError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Невірний токен"

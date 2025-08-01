@@ -10,10 +10,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Копіюємо файли залежностей
-COPY requirements.txt .
+COPY base.txt requirements/
+COPY ai-service.txt requirements/
 
 # Встановлюємо Python залежності
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements/base.txt -r requirements/ai-service.txt
 
 # Копіюємо код сервісу
 COPY src/ ./src/

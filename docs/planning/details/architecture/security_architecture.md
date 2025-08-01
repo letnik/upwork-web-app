@@ -501,9 +501,9 @@ class SecurityLogger:
 
 ---
 
-**Детальний звіт аудиту**: [security_audit_report_v1.0.0.md](../../newspaper/report/security_audit_report_v1.0.0.md)
+**Детальний звіт аудиту**: [security_audit_report_v1.0.0.md](../newspaper/report/security_audit_report_v1.0.0.md)
 
-**План реалізації**: [security_improvement_plan_v1.0.0.md](../../newspaper/report/security_improvement_plan_v1.0.0.md)
+**План реалізації**: [security_improvement_plan_v1.0.0.md](../newspaper/report/security_improvement_plan_v1.0.0.md)
 
 ---
 

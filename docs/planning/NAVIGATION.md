@@ -107,6 +107,9 @@
 - [x] Гайди розробки
 - [x] Навігаційний індекс
 - [x] Аналіз безпеки та критичних проблем
+- [x] OAuth Frontend Integration Guide
+- [x] Test Security Guide
+- [x] Класифікація тестів
 
 ### ** В процесі**
 - [ ] Детальні implementation plans

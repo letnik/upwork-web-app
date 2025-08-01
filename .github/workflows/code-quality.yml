@@ -1,0 +1,82 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install linting tools
+      run: |
+        pip install flake8 black isort mypy bandit
+    
+    - name: Run flake8
+      run: |
+        flake8 app/backend/ --max-line-length=88 --extend-ignore=E203,W503
+    
+    - name: Run black check
+      run: |
+        black --check app/backend/
+    
+    - name: Run isort check
+      run: |
+        isort --check-only app/backend/
+    
+    - name: Run mypy
+      run: |
+        mypy app/backend/ --ignore-missing-imports
+    
+    - name: Run bandit security check
+      run: |
+        bandit -r app/backend/ -f json -o bandit-report.json || true
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: app/frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      run: |
+        cd app/frontend
+        npm ci
+    
+    - name: Run ESLint
+      run: |
+        cd app/frontend
+        npm run lint
+    
+    - name: Run TypeScript check
+      run: |
+        cd app/frontend
+        npx tsc --noEmit
+
+  format-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check code formatting
+      run: |
+        echo "Checking code formatting..."
+        # Тут можна додати додаткові перевірки форматування 

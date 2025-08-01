@@ -11,6 +11,7 @@ import os
 
 # Додаємо шлях до спільних компонентів
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'shared'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 from shared.config.settings import settings
 from shared.config.logging import setup_logging, get_logger

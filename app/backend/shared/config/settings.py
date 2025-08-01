@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # База даних
     DATABASE_URL: str = Field(
-        default="postgresql://user:password@localhost/upwork_app",
+        default="sqlite:///./test.db",
         env="DATABASE_URL"
     )
     
@@ -49,6 +49,26 @@ class Settings(BaseSettings):
     UPWORK_CALLBACK_URL: str = Field(
         default="http://localhost:8000/auth/upwork/callback",
         env="UPWORK_CALLBACK_URL"
+    )
+    
+    # Додаткові Upwork URL (додано для виправлення помилки)
+    UPWORK_AUTH_URL: str = Field(
+        default="https://www.upwork.com/services/api/auth",
+        env="UPWORK_AUTH_URL"
+    )
+    UPWORK_TOKEN_URL: str = Field(
+        default="https://www.upwork.com/api/v2/oauth2/token",
+        env="UPWORK_TOKEN_URL"
+    )
+    UPWORK_API_BASE_URL: str = Field(
+        default="https://www.upwork.com/api/v2",
+        env="UPWORK_API_BASE_URL"
+    )
+    
+    # React App URL (додано для виправлення помилки)
+    REACT_APP_API_URL: str = Field(
+        default="http://localhost:8000",
+        env="REACT_APP_API_URL"
     )
     
     # OpenAI API
@@ -110,7 +130,7 @@ class Settings(BaseSettings):
     )
     
     class Config:
-        env_file = ".env"
+        env_file = "../../../.env"
         case_sensitive = False
 
 

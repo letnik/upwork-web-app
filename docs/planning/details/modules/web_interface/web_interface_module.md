@@ -1,727 +1,1034 @@
-# Модуль веб-інтерфейсу
+# Web Interface Модуль
 
-> **Модуль для створення сучасного та зручного веб-інтерфейсу**
+## Огляд
 
----
+Web Interface модуль забезпечує сучасний та інтуїтивний користувацький інтерфейс для роботи з Upwork AI Assistant.
 
-## Зміст
+## Основні компоненти
 
-1. [Огляд модуля](#огляд-модуля)
-2. [Архітектура модуля](#-архітектура-модуля)
-3. [API Endpoints](#-api-endpoints)
-4. [Аспекти безпеки](#аспекти-безпеки)
-5. [Інтеграція](#інтеграція)
-6. [Тестування](#тестування)
-7. [Моніторинг](#моніторинг)
+### 1. Dashboard (Головна панель)
+- Огляд статистики та метрик
+- Швидкий доступ до основних функцій
+- Графіки та аналітика
 
----
+### 2. Job Search (Пошук вакансій)
+- Розширений пошук з фільтрами
+- Збереження улюблених вакансій
+- Аналіз підходящості
 
-## Огляд модуля
+### 3. Proposal Creator (Створення відгуків)
+- AI-генерація відгуків
+- Редагування та валідація
+- Шаблони та історія
 
-### Призначення
-- Створення інтерактивного веб-інтерфейсу
-- Відображення дашбордів та аналітики
-- Керування пропозиціями та контрактами
-- Інтеграція з усіма модулями системи
-- Забезпечення відповідності та зручності
+### 4. Analytics (Аналітика)
+- Детальна статистика
+- Графіки продуктивності
+- Експорт даних
 
-### Основні функції
-- Реактивний інтерфейс на React.js
-- Реальний час оновлення даних
-- Адаптивний дизайн
-- Інтерактивні графіки та діаграми
-- Система сповіщень
+## AI Settings Interface (Інтерфейс налаштувань AI)
 
----
+### Компонент налаштувань AI
 
-## Архітектура модуля
-
-### Компоненти
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Web Interface Module                      │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │ React App   │  │ State Mgmt  │  │ Router      │        │
-│  │             │  │ (Zustand)   │  │             │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │ Components  │  │ API Client  │  │ Real-time   │        │
-│  │ (Material-UI)│  │ (React Query)│  │ (WebSocket) │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │ Charts      │  │ Notifications│  │ Responsive  │        │
-│  │ & Graphs    │  │ System      │  │ Design      │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**State Management:**
-- **Zustand** для локального стану
-- **React Query** для серверного стану та кешування
-- **Material-UI** для компонентів інтерфейсу
-
-### Взаємодія з іншими модулями
-
-- **Auth Module**: Авторизація та аутентифікація
-- **Analytics Module**: Відображення дашбордів
-- **AI Module**: Інтеграція AI функцій
-- **Upwork Integration**: Відображення даних з Upwork
-
----
-
-## API Endpoints
-
-### Керування користувачами
-
-```python
-# Отримання профілю користувача
-GET /api/user/profile
-Headers: Authorization: Bearer <token>
-Response: {
-    "user_id": "user_123",
-    "email": "user@example.com",
-    "upwork_profile": {
-        "profile_id": "~0123456789",
-        "hourly_rate": 85,
-        "total_earnings": 15000,
-        "success_rate": 0.85
-    },
-    "preferences": {
-        "notifications": true,
-        "theme": "dark",
-        "language": "uk"
-    }
-}
-
-# Оновлення профілю
-PUT /api/user/profile
-Headers: Authorization: Bearer <token>
-Body: {
-    "preferences": {
-        "notifications": false,
-        "theme": "light"
-    }
-}
-Response: {
-    "status": "success",
-    "message": "Profile updated successfully"
-}
-```
-
-### Дашборди та аналітика
-
-```python
-# Отримання головного дашборду
-GET /api/dashboard/main
-Headers: Authorization: Bearer <token>
-Response: {
-    "widgets": [
-        {
-            "id": "earnings_chart",
-            "type": "line_chart",
-            "title": "Доходи за місяць",
-            "data": {
-                "labels": ["Січ", "Лют", "Бер"],
-                "datasets": [{
-                    "label": "Доходи",
-                    "data": [5000, 6500, 7200],
-                    "borderColor": "#4CAF50"
-                }]
-            }
-        },
-        {
-            "id": "proposals_status",
-            "type": "pie_chart",
-            "title": "Статус пропозицій",
-            "data": {
-                "labels": ["Очікування", "Інтерв'ю", "Прийнято", "Відхилено"],
-                "datasets": [{
-                    "data": [15, 8, 12, 25],
-                    "backgroundColor": ["#FFC107", "#2196F3", "#4CAF50", "#F44336"]
-                }]
-            }
-        }
-    ],
-    "summary": {
-        "total_earnings": 18700,
-        "active_contracts": 3,
-        "win_rate": 0.27,
-        "proposals_sent": 60
-    }
-}
-
-# Отримання детальної аналітики
-GET /api/analytics/detailed
-Headers: Authorization: Bearer <token>
-Query params: period, category, date_from, date_to
-Response: {
-    "period": "monthly",
-    "metrics": {
-        "earnings_by_category": {
-            "web_development": 8500,
-            "mobile_development": 6200,
-            "design": 4000
-        },
-        "proposals_by_status": {
-            "pending": 15,
-            "interviewing": 8,
-            "hired": 12,
-            "rejected": 25
-        },
-        "top_skills": [
-            {"skill": "React", "demand": 0.85},
-            {"skill": "Node.js", "demand": 0.78},
-            {"skill": "Python", "demand": 0.72}
-        ]
-    },
-    "trends": {
-        "earnings_growth": 0.15,
-        "win_rate_change": 0.05,
-        "proposals_growth": 0.20
-    }
-}
-```
-
-### Керування пропозиціями
-
-```python
-# Отримання списку пропозицій
-GET /api/proposals
-Headers: Authorization: Bearer <token>
-Query params: status, category, page, limit
-Response: {
-    "proposals": [
-        {
-            "id": "proposal_123",
-            "title": "E-commerce Website Development",
-            "client": "Client Name",
-            "budget": 5000,
-            "status": "interviewing",
-            "submitted_at": "2024-12-15T10:30:00Z",
-            "category": "web_development",
-            "ai_score": 0.85,
-            "ai_suggestions": [
-                "Додайте більше деталей про технології",
-                "Включіть приклади робіт"
-            ]
-        }
-    ],
-    "pagination": {
-        "page": 1,
-        "limit": 20,
-        "total": 60,
-        "pages": 3
-    }
-}
-
-# Створення нової пропозиції
-POST /api/proposals
-Headers: Authorization: Bearer <token>
-Body: {
-    "title": "Mobile App Development",
-    "description": "Professional mobile app development...",
-    "budget": 3000,
-    "timeline": "2 months",
-    "skills": ["React Native", "Node.js", "MongoDB"],
-    "use_ai_assistance": true
-}
-Response: {
-    "proposal_id": "proposal_456",
-    "ai_generated_content": {
-        "proposal_text": "Професійний розробник з 5+ роками досвіду...",
-        "cover_letter": "Дякую за можливість...",
-        "score": 0.92
-    },
-    "status": "draft"
-}
-```
-
-### Сповіщення
-
-```python
-# Отримання сповіщень
-GET /api/notifications
-Headers: Authorization: Bearer <token>
-Query params: unread_only, limit
-Response: {
-    "notifications": [
-        {
-            "id": "notif_123",
-            "type": "proposal_status",
-            "title": "Пропозиція прийнята",
-            "message": "Ваша пропозиція 'E-commerce Website' була прийнята",
-            "data": {
-                "proposal_id": "proposal_123",
-                "client_name": "Client Name"
-            },
-            "read": false,
-            "created_at": "2024-12-19T15:30:00Z"
-        }
-    ],
-    "unread_count": 5
-}
-
-# Позначення сповіщення як прочитане
-PUT /api/notifications/{notification_id}/read
-Headers: Authorization: Bearer <token>
-Response: {
-    "status": "success",
-    "message": "Notification marked as read"
-}
-```
-
----
-
-## Аспекти безпеки
-
-### Безпека веб-інтерфейсу
-
-```python
-class WebInterfaceSecurity:
-    def __init__(self):
-        self.csrf_protection = CSRFProtection()
-        self.xss_protection = XSSProtection()
-        self.content_security_policy = ContentSecurityPolicy()
-        
-    def validate_user_input(self, data: dict) -> bool:
-        """Валідація вхідних даних користувача"""
-# Перевірка на XSS
-        for key, value in data.items():
-            if isinstance(value, str) and self.xss_protection.contains_xss(value):
-                return False
-                
-# Перевірка на SQL injection
-        if self.contains_sql_injection(str(data)):
-            return False
-            
-        return True
-    
-    def sanitize_output(self, data: dict) -> dict:
-        """Очищення вихідних даних"""
-        sanitized = {}
-        for key, value in data.items():
-            if isinstance(value, str):
-                sanitized[key] = self.xss_protection.sanitize(value)
-            elif isinstance(value, dict):
-                sanitized[key] = self.sanitize_output(value)
-            else:
-                sanitized[key] = value
-        return sanitized
-    
-    def set_security_headers(self, response):
-        """Встановлює заголовки безпеки"""
-        response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-Frame-Options'] = 'DENY'
-        response.headers['X-XSS-Protection'] = '1; mode=block'
-        response.headers['Content-Security-Policy'] = self.content_security_policy.get_policy()
-        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-```
-
-### CORS та безпека
-
-```python
-class CORSManager:
-    def __init__(self):
-        self.allowed_origins = [
-            'https://app.upwork-analyzer.com',
-            'https://localhost:3000'
-        ]
-        self.allowed_methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-        self.allowed_headers = [
-            'Content-Type', 'Authorization', 'X-Requested-With'
-        ]
-        
-    def validate_origin(self, origin: str) -> bool:
-        """Перевіряє дозволене походження"""
-        return origin in self.allowed_origins
-    
-    def set_cors_headers(self, response, origin: str):
-        """Встановлює CORS заголовки"""
-        if self.validate_origin(origin):
-            response.headers['Access-Control-Allow-Origin'] = origin
-            response.headers['Access-Control-Allow-Methods'] = ', '.join(self.allowed_methods)
-            response.headers['Access-Control-Allow-Headers'] = ', '.join(self.allowed_headers)
-            response.headers['Access-Control-Allow-Credentials'] = 'true'
-```
-
----
-
-## Інтеграція
-
-### Інтеграція з React.js
-
+#### Структура компонента
 ```typescript
-// Основна структура React додатку
-interface AppState {
-  user: User | null;
-  dashboard: DashboardData | null;
-  notifications: Notification[];
-  theme: 'light' | 'dark';
+interface AISettingsPanel {
+  aiDisclosure: AIDisclosureSettings;
+  editing: EditingSettings;
+  validation: ValidationSettings;
+  preferences: UserPreferences;
 }
+```
 
-class WebInterfaceManager {
-  private apiClient: APIClient;
-  private stateManager: StateManager;
-  private realTimeClient: RealTimeClient;
-  
-  constructor() {
-    this.apiClient = new APIClient();
-    this.stateManager = new StateManager();
-    this.realTimeClient = new RealTimeClient();
-  }
-  
-  async initializeApp(): Promise<void> {
-    try {
-      // Завантажуємо дані користувача
-      const user = await this.apiClient.getUserProfile();
-      this.stateManager.setUser(user);
-      
-      // Завантажуємо дашборд
-      const dashboard = await this.apiClient.getDashboard();
-      this.stateManager.setDashboard(dashboard);
-      
-      // Підключаємося до real-time оновлень
-      this.realTimeClient.connect();
-      
-    } catch (error) {
-      console.error('Failed to initialize app:', error);
-      throw error;
-    }
-  }
-  
-  async updateProposal(proposalId: string, data: Partial<Proposal>): Promise<void> {
-    try {
-      const updatedProposal = await this.apiClient.updateProposal(proposalId, data);
-      this.stateManager.updateProposal(updatedProposal);
-      
-      // Оновлюємо дашборд
-      const dashboard = await this.apiClient.getDashboard();
-      this.stateManager.setDashboard(dashboard);
-      
-    } catch (error) {
-      console.error('Failed to update proposal:', error);
-      throw error;
-    }
-  }
+#### AI Disclosure Settings (Налаштування розкриття AI)
+```typescript
+interface AIDisclosureSettings {
+  enabled: boolean;
+  position: 'start' | 'end' | 'none';
+  template: 'default' | 'minimal' | 'detailed' | 'custom';
+  customText: string;
+  autoAdd: boolean;
 }
+```
 
-// Компонент дашборду
-class DashboardComponent extends React.Component<DashboardProps, DashboardState> {
-  async componentDidMount() {
+#### Editing Settings (Налаштування редагування)
+```typescript
+interface EditingSettings {
+  autoSave: boolean;
+  saveInterval: number; // секунди
+  draftRetention: number; // дні
+  validation: {
+    minLength: number;
+    maxLength: number;
+    checkSpam: boolean;
+    requireReview: boolean;
+  };
+}
+```
+
+### UI Компоненти
+
+#### AI Settings Panel
+```tsx
+const AISettingsPanel: React.FC = () => {
+  const [settings, setSettings] = useState<AISettings>(defaultSettings);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async (newSettings: AISettings) => {
+    setIsLoading(true);
     try {
-      const dashboard = await this.props.apiClient.getDashboard();
-      this.setState({ dashboard, loading: false });
+      await updateAISettings(newSettings);
+      setSettings(newSettings);
+      showSuccess('Налаштування збережено');
     } catch (error) {
-      this.setState({ error: error.message, loading: false });
+      showError('Помилка збереження налаштувань');
+    } finally {
+      setIsLoading(false);
     }
-  }
-  
-  render() {
-    if (this.state.loading) {
-      return <LoadingSpinner />;
+  };
+
+  return (
+    <div className="ai-settings-panel">
+      <h2>Налаштування AI</h2>
+      
+      {/* AI Disclosure Section */}
+      <section className="disclosure-settings">
+        <h3>Розкриття AI</h3>
+        
+        <div className="setting-group">
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={settings.aiDisclosure.enabled}
+              onChange={(e) => handleDisclosureToggle(e.target.checked)}
+            />
+            <span>Включити розкриття AI</span>
+          </label>
+          <p className="setting-description">
+            Автоматично додавати інформацію про використання AI в згенерований контент
+          </p>
+        </div>
+
+        {settings.aiDisclosure.enabled && (
+          <>
+            <div className="setting-group">
+              <label>Позиція розкриття:</label>
+              <select
+                value={settings.aiDisclosure.position}
+                onChange={(e) => handlePositionChange(e.target.value)}
+              >
+                <option value="start">На початку</option>
+                <option value="end">В кінці</option>
+                <option value="none">Не додавати</option>
+              </select>
+            </div>
+
+            <div className="setting-group">
+              <label>Шаблон розкриття:</label>
+              <select
+                value={settings.aiDisclosure.template}
+                onChange={(e) => handleTemplateChange(e.target.value)}
+              >
+                <option value="minimal">Мінімальний</option>
+                <option value="default">Стандартний</option>
+                <option value="detailed">Детальний</option>
+                <option value="custom">Кастомний</option>
+              </select>
+            </div>
+
+            {settings.aiDisclosure.template === 'custom' && (
+              <div className="setting-group">
+                <label>Кастомний текст:</label>
+                <textarea
+                  value={settings.aiDisclosure.customText}
+                  onChange={(e) => handleCustomTextChange(e.target.value)}
+                  placeholder="Введіть власний текст розкриття..."
+                  rows={3}
+                />
+              </div>
+            )}
+
+            <div className="setting-group">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={settings.aiDisclosure.autoAdd}
+                  onChange={(e) => handleAutoAddChange(e.target.checked)}
+                />
+                <span>Автоматично додавати розкриття</span>
+              </label>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Editing Settings Section */}
+      <section className="editing-settings">
+        <h3>Налаштування редагування</h3>
+        
+        <div className="setting-group">
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={settings.editing.autoSave}
+              onChange={(e) => handleAutoSaveChange(e.target.checked)}
+            />
+            <span>Автозбереження чернеток</span>
+          </label>
+        </div>
+
+        {settings.editing.autoSave && (
+          <div className="setting-group">
+            <label>Інтервал збереження (секунди):</label>
+            <input
+              type="number"
+              min="10"
+              max="300"
+              value={settings.editing.saveInterval}
+              onChange={(e) => handleSaveIntervalChange(parseInt(e.target.value))}
+            />
+          </div>
+        )}
+
+        <div className="setting-group">
+          <label>Зберігати чернетки (дні):</label>
+          <input
+            type="number"
+            min="1"
+            max="90"
+            value={settings.editing.draftRetention}
+            onChange={(e) => handleRetentionChange(parseInt(e.target.value))}
+          />
+        </div>
+      </section>
+
+      {/* Validation Settings Section */}
+      <section className="validation-settings">
+        <h3>Валідація контенту</h3>
+        
+        <div className="setting-group">
+          <label>Мінімальна довжина (символів):</label>
+          <input
+            type="number"
+            min="50"
+            value={settings.editing.validation.minLength}
+            onChange={(e) => handleMinLengthChange(parseInt(e.target.value))}
+          />
+        </div>
+
+        <div className="setting-group">
+          <label>Максимальна довжина (символів):</label>
+          <input
+            type="number"
+            max="5000"
+            value={settings.editing.validation.maxLength}
+            onChange={(e) => handleMaxLengthChange(parseInt(e.target.value))}
+          />
+        </div>
+
+        <div className="setting-group">
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={settings.editing.validation.checkSpam}
+              onChange={(e) => handleSpamCheckChange(e.target.checked)}
+            />
+            <span>Перевіряти на спам</span>
+          </label>
+        </div>
+
+        <div className="setting-group">
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={settings.editing.validation.requireReview}
+              onChange={(e) => handleReviewRequirementChange(e.target.checked)}
+            />
+            <span>Вимагати перегляду перед відправкою</span>
+          </label>
+        </div>
+      </section>
+
+      {/* Action Buttons */}
+      <div className="settings-actions">
+        <button
+          className="btn btn-primary"
+          onClick={() => handleSave(settings)}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Збереження...' : 'Зберегти налаштування'}
+        </button>
+        
+        <button
+          className="btn btn-secondary"
+          onClick={handleReset}
+          disabled={isLoading}
+        >
+          Скинути до за замовчуванням
+        </button>
+      </div>
+    </div>
+  );
+};
+```
+
+## Proposal Editor (Редактор відгуків)
+
+### Структура редактора
+```typescript
+interface ProposalEditor {
+  draftId?: string;
+  jobId: string;
+  content: string;
+  aiGenerated: boolean;
+  aiDisclosureIncluded: boolean;
+  validationStatus: 'pending' | 'valid' | 'invalid' | 'warning';
+  validationErrors: string[];
+  lastSaved: Date;
+  isDirty: boolean;
+  wordCount: number;
+  characterCount: number;
+}
+```
+
+### Компонент редактора
+```tsx
+const ProposalEditor: React.FC<ProposalEditorProps> = ({ jobId, initialContent }) => {
+  const [editor, setEditor] = useState<ProposalEditor>({
+    jobId,
+    content: initialContent || '',
+    aiGenerated: false,
+    aiDisclosureIncluded: false,
+    validationStatus: 'pending',
+    validationErrors: [],
+    lastSaved: new Date(),
+    isDirty: false,
+    wordCount: 0,
+    characterCount: 0
+  });
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Автозбереження
+  useEffect(() => {
+    if (editor.isDirty && editor.content.length > 0) {
+      const timer = setTimeout(() => {
+        handleAutoSave();
+      }, 30000); // 30 секунд
+
+      return () => clearTimeout(timer);
     }
+  }, [editor.content, editor.isDirty]);
+
+  // Підрахунок слів та символів
+  useEffect(() => {
+    const wordCount = editor.content.trim().split(/\s+/).length;
+    const characterCount = editor.content.length;
     
-    if (this.state.error) {
-      return <ErrorMessage message={this.state.error} />;
+    setEditor(prev => ({
+      ...prev,
+      wordCount,
+      characterCount
+    }));
+  }, [editor.content]);
+
+  const handleGenerateAI = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await generateProposal({
+        jobId: editor.jobId,
+        includeDisclosure: true
+      });
+
+      setEditor(prev => ({
+        ...prev,
+        content: response.content,
+        aiGenerated: true,
+        aiDisclosureIncluded: response.aiDisclosureIncluded,
+        isDirty: true
+      }));
+
+      showSuccess('Відгук згенеровано успішно');
+    } catch (error) {
+      showError('Помилка генерації відгуку');
+    } finally {
+      setIsGenerating(false);
     }
+  };
+
+  const handleContentChange = (newContent: string) => {
+    setEditor(prev => ({
+      ...prev,
+      content: newContent,
+      isDirty: true
+    }));
+  };
+
+  const handleAutoSave = async () => {
+    if (!editor.isDirty) return;
+
+    setIsSaving(true);
+    try {
+      const response = await saveDraft({
+        jobId: editor.jobId,
+        content: editor.content,
+        aiGenerated: editor.aiGenerated,
+        aiDisclosureIncluded: editor.aiDisclosureIncluded
+      });
+
+      setEditor(prev => ({
+        ...prev,
+        draftId: response.draftId,
+        isDirty: false,
+        lastSaved: new Date()
+      }));
+    } catch (error) {
+      showError('Помилка автозбереження');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleValidate = async () => {
+    try {
+      const validation = await validateProposal({
+        content: editor.content,
+        jobId: editor.jobId,
+        aiDisclosureIncluded: editor.aiDisclosureIncluded
+      });
+
+      setEditor(prev => ({
+        ...prev,
+        validationStatus: validation.isValid ? 'valid' : 'invalid',
+        validationErrors: validation.errors
+      }));
+
+      if (validation.isValid) {
+        showSuccess('Відгук валідний');
+      } else {
+        showWarning('Знайдено помилки валідації');
+      }
+    } catch (error) {
+      showError('Помилка валідації');
+    }
+  };
+
+  const handleSend = async () => {
+    if (editor.validationStatus !== 'valid') {
+      showError('Спочатку валідуйте відгук');
+      return;
+    }
+
+    try {
+      await sendProposal({
+        draftId: editor.draftId,
+        jobId: editor.jobId,
+        finalContent: editor.content
+      });
+
+      showSuccess('Відгук відправлено успішно');
+      // Перенаправлення на сторінку відгуків
+    } catch (error) {
+      showError('Помилка відправки відгуку');
+    }
+  };
     
     return (
-      <div className="dashboard">
-        <DashboardHeader summary={this.state.dashboard.summary} />
-        <WidgetGrid widgets={this.state.dashboard.widgets} />
-        <RecentActivity activities={this.state.dashboard.recentActivities} />
+    <div className="proposal-editor">
+      <div className="editor-header">
+        <h2>Редактор відгуку</h2>
+        
+        <div className="editor-actions">
+          <button
+            className="btn btn-primary"
+            onClick={handleGenerateAI}
+            disabled={isGenerating}
+          >
+            {isGenerating ? 'Генерація...' : 'Згенерувати AI'}
+          </button>
+          
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowPreview(!showPreview)}
+          >
+            {showPreview ? 'Редагувати' : 'Попередній перегляд'}
+          </button>
+          
+          <button
+            className="btn btn-success"
+            onClick={handleValidate}
+          >
+            Валідувати
+          </button>
+          
+          <button
+            className="btn btn-primary"
+            onClick={handleSend}
+            disabled={editor.validationStatus !== 'valid'}
+          >
+            Відправити
+          </button>
       </div>
-    );
-  }
+      </div>
+
+      <div className="editor-content">
+        {showPreview ? (
+          <div className="preview-panel">
+            <h3>Попередній перегляд</h3>
+            <div className="preview-content">
+              {editor.content.split('\n').map((line, index) => (
+                <p key={index}>{line}</p>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="editor-panel">
+            <div className="editor-toolbar">
+              <div className="toolbar-group">
+                <button className="toolbar-btn" title="Жирний">B</button>
+                <button className="toolbar-btn" title="Курсив">I</button>
+                <button className="toolbar-btn" title="Підкреслений">U</button>
+              </div>
+              
+              <div className="toolbar-group">
+                <button className="toolbar-btn" title="Список">•</button>
+                <button className="toolbar-btn" title="Нумерований список">1.</button>
+              </div>
+            </div>
+
+            <textarea
+              className="content-editor"
+              value={editor.content}
+              onChange={(e) => handleContentChange(e.target.value)}
+              placeholder="Введіть текст відгуку..."
+              rows={15}
+            />
+
+            {editor.aiGenerated && (
+              <div className="ai-warning">
+                <div className="warning-icon">⚠️</div>
+                <div className="warning-text">
+                  <strong>AI-генерований контент</strong>
+                  <p>Перегляньте та відредагуйте перед відправкою</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="editor-sidebar">
+        <div className="sidebar-section">
+          <h4>Статистика</h4>
+          <div className="stats">
+            <div className="stat-item">
+              <span className="stat-label">Слова:</span>
+              <span className="stat-value">{editor.wordCount}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Символи:</span>
+              <span className="stat-value">{editor.characterCount}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="sidebar-section">
+          <h4>Статус</h4>
+          <div className="status-indicators">
+            <div className={`status-item ${editor.validationStatus}`}>
+              <span className="status-icon">
+                {editor.validationStatus === 'valid' && '✅'}
+                {editor.validationStatus === 'invalid' && '❌'}
+                {editor.validationStatus === 'warning' && '⚠️'}
+                {editor.validationStatus === 'pending' && '⏳'}
+              </span>
+              <span className="status-text">
+                {editor.validationStatus === 'valid' && 'Валідний'}
+                {editor.validationStatus === 'invalid' && 'Помилки'}
+                {editor.validationStatus === 'warning' && 'Попередження'}
+                {editor.validationStatus === 'pending' && 'Очікує валідації'}
+              </span>
+            </div>
+            
+            <div className="status-item">
+              <span className="status-icon">
+                {isSaving ? '💾' : '💾'}
+              </span>
+              <span className="status-text">
+                {isSaving ? 'Збереження...' : 'Збережено'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {editor.validationErrors.length > 0 && (
+          <div className="sidebar-section">
+            <h4>Помилки валідації</h4>
+            <div className="validation-errors">
+              {editor.validationErrors.map((error, index) => (
+                <div key={index} className="error-item">
+                  <span className="error-icon">❌</span>
+                  <span className="error-text">{error}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="sidebar-section">
+          <h4>Дії</h4>
+          <div className="action-buttons">
+            <button
+              className="btn btn-sm btn-secondary"
+              onClick={handleAutoSave}
+              disabled={!editor.isDirty || isSaving}
+            >
+              Зберегти чернетку
+            </button>
+            
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={() => setShowPreview(!showPreview)}
+            >
+              {showPreview ? 'Редагувати' : 'Перегляд'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+## Стилі CSS
+
+### AI Settings Panel Styles
+```css
+.ai-settings-panel {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.setting-group {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.setting-description {
+  margin-top: 0.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e1e5e9;
 }
 ```
 
-### Інтеграція з API
+### Proposal Editor Styles
+```css
+.proposal-editor {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 2rem;
+  height: calc(100vh - 100px);
+}
 
+.editor-header {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #fff;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editor-content {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e1e5e9;
+  background: #f8f9fa;
+}
+
+.toolbar-group {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.toolbar-btn {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.toolbar-btn:hover {
+  background: #e9ecef;
+}
+
+.content-editor {
+  width: 100%;
+  min-height: 400px;
+  padding: 1rem;
+  border: none;
+  resize: vertical;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-warning {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  margin: 1rem;
+}
+
+.warning-icon {
+  font-size: 1.5rem;
+}
+
+.warning-text strong {
+  color: #856404;
+}
+
+.editor-sidebar {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.sidebar-section:last-child {
+  border-bottom: none;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: #f8f9fa;
+}
+
+.status-item.valid {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-item.invalid {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-item.warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.validation-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f8d7da;
+  border-radius: 4px;
+  color: #721c24;
+}
+
+.error-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+```
+
+## Інтеграція з API
+
+### Хуки для роботи з API
 ```typescript
-class APIClient {
-  private baseURL: string;
-  private authToken: string;
-  
-  constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    this.authToken = localStorage.getItem('auth_token') || '';
-  }
-  
-  private async request<T>(
-    endpoint: string, 
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.authToken}`,
-      ...options.headers
-    };
-    
+// Хук для налаштувань AI
+const useAISettings = () => {
+  const [settings, setSettings] = useState<AISettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSettings = async () => {
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers
-      });
-      
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Токен закінчився, перенаправляємо на логін
-          window.location.href = '/login';
-          return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
+      setLoading(true);
+      const response = await api.get('/ai/settings');
+      setSettings(response.data);
+    } catch (err) {
+      setError('Помилка завантаження налаштувань');
+    } finally {
+      setLoading(false);
     }
-  }
-  
-  async getDashboard(): Promise<DashboardData> {
-    return this.request<DashboardData>('/api/dashboard/main');
-  }
-  
-  async getProposals(params: ProposalsParams): Promise<ProposalsResponse> {
-    const queryString = new URLSearchParams(params).toString();
-    return this.request<ProposalsResponse>(`/api/proposals?${queryString}`);
-  }
-  
-  async createProposal(data: CreateProposalData): Promise<Proposal> {
-    return this.request<Proposal>('/api/proposals', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-  }
-  
-  async getNotifications(unreadOnly: boolean = false): Promise<Notification[]> {
-    return this.request<Notification[]>(`/api/notifications?unread_only=${unreadOnly}`);
-  }
-}
+  };
+
+  const updateSettings = async (newSettings: AISettings) => {
+    try {
+      const response = await api.put('/ai/settings', newSettings);
+      setSettings(response.data);
+      return response.data;
+    } catch (err) {
+      throw new Error('Помилка збереження налаштувань');
+    }
+  };
+
+  const resetSettings = async () => {
+    try {
+      const response = await api.post('/ai/settings/reset');
+      setSettings(response.data);
+      return response.data;
+    } catch (err) {
+      throw new Error('Помилка скидання налаштувань');
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  return {
+    settings,
+    loading,
+    error,
+    updateSettings,
+    resetSettings,
+    refetch: fetchSettings
+  };
+};
+
+// Хук для редактора відгуків
+const useProposalEditor = (jobId: string) => {
+  const [draft, setDraft] = useState<ProposalDraft | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const generateProposal = async (options: GenerateOptions) => {
+    try {
+      setLoading(true);
+      const response = await api.post('/ai/generate-proposal', {
+        job_id: jobId,
+        ...options
+      });
+      return response.data;
+    } catch (err) {
+      throw new Error('Помилка генерації відгуку');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveDraft = async (draftData: DraftData) => {
+    try {
+      const response = await api.post('/ai/drafts', draftData);
+      setDraft(response.data);
+      return response.data;
+    } catch (err) {
+      throw new Error('Помилка збереження чернетки');
+    }
+  };
+
+  const validateProposal = async (content: string) => {
+    try {
+      const response = await api.post('/ai/validate-proposal', {
+        content,
+        job_id: jobId
+      });
+      return response.data;
+    } catch (err) {
+      throw new Error('Помилка валідації');
+    }
+  };
+
+  const sendProposal = async (proposalData: SendProposalData) => {
+    try {
+      const response = await api.post('/ai/send-proposal', proposalData);
+      return response.data;
+    } catch (err) {
+      throw new Error('Помилка відправки відгуку');
+    }
+  };
+
+  return {
+    draft,
+    loading,
+    generateProposal,
+    saveDraft,
+    validateProposal,
+    sendProposal
+  };
+};
 ```
 
----
+## Тестування компонентів
 
-## 🧪 Тестування
-
-### Unit Tests
-
+### Unit тести для AI Settings
 ```typescript
-describe('WebInterfaceManager', () => {
-  let manager: WebInterfaceManager;
-  let mockApiClient: jest.Mocked<APIClient>;
-  
-  beforeEach(() => {
-    mockApiClient = {
-      getUserProfile: jest.fn(),
-      getDashboard: jest.fn(),
-      updateProposal: jest.fn()
-    } as any;
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { AISettingsPanel } from './AISettingsPanel';
+
+describe('AISettingsPanel', () => {
+  it('should render all settings sections', () => {
+    render(<AISettingsPanel />);
     
-    manager = new WebInterfaceManager();
-    manager['apiClient'] = mockApiClient;
+    expect(screen.getByText('Налаштування AI')).toBeInTheDocument();
+    expect(screen.getByText('Розкриття AI')).toBeInTheDocument();
+    expect(screen.getByText('Налаштування редагування')).toBeInTheDocument();
+    expect(screen.getByText('Валідація контенту')).toBeInTheDocument();
   });
-  
-  test('should initialize app successfully', async () => {
-    const mockUser = { id: 'user_123', email: 'test@example.com' };
-    const mockDashboard = { widgets: [], summary: {} };
+
+  it('should toggle AI disclosure settings', () => {
+    render(<AISettingsPanel />);
     
-    mockApiClient.getUserProfile.mockResolvedValue(mockUser);
-    mockApiClient.getDashboard.mockResolvedValue(mockDashboard);
+    const disclosureToggle = screen.getByLabelText('Включити розкриття AI');
+    fireEvent.click(disclosureToggle);
     
-    await manager.initializeApp();
-    
-    expect(mockApiClient.getUserProfile).toHaveBeenCalled();
-    expect(mockApiClient.getDashboard).toHaveBeenCalled();
+    expect(screen.getByText('Позиція розкриття:')).toBeInTheDocument();
+    expect(screen.getByText('Шаблон розкриття:')).toBeInTheDocument();
   });
-  
-  test('should handle initialization error', async () => {
-    mockApiClient.getUserProfile.mockRejectedValue(new Error('API Error'));
+
+  it('should save settings successfully', async () => {
+    const mockUpdateSettings = jest.fn().mockResolvedValue({});
+    render(<AISettingsPanel onUpdateSettings={mockUpdateSettings} />);
     
-    await expect(manager.initializeApp()).rejects.toThrow('API Error');
+    const saveButton = screen.getByText('Зберегти налаштування');
+    fireEvent.click(saveButton);
+    
+    await waitFor(() => {
+      expect(mockUpdateSettings).toHaveBeenCalled();
+    });
   });
 });
-
-describe('APIClient', () => {
-  let client: APIClient;
-  
-  beforeEach(() => {
-    client = new APIClient();
-    localStorage.clear();
-  });
-  
-  test('should make authenticated requests', async () => {
-    const mockToken = 'test_token';
-    localStorage.setItem('auth_token', mockToken);
-    
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ data: 'test' })
-    });
-    
-    await client.getDashboard();
-    
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/dashboard/main'),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          'Authorization': `Bearer ${mockToken}`
-        })
-      })
-    );
-  });
-});
 ```
 
-### Integration Tests
-
+### Unit тести для Proposal Editor
 ```typescript
-describe('Dashboard Integration', () => {
-  test('should load and display dashboard data', async () => {
-    const mockDashboard = {
-      widgets: [
-        {
-          id: 'earnings_chart',
-          type: 'line_chart',
-          title: 'Доходи за місяць',
-          data: { labels: [], datasets: [] }
-        }
-      ],
-      summary: {
-        total_earnings: 15000,
-        active_contracts: 3
-      }
-    };
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { ProposalEditor } from './ProposalEditor';
+
+describe('ProposalEditor', () => {
+  const mockJobId = '~0123456789012345';
+
+  it('should render editor with all components', () => {
+    render(<ProposalEditor jobId={mockJobId} />);
     
-    // Мокаємо API
-    jest.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockDashboard)
-    } as Response);
+    expect(screen.getByText('Редактор відгуку')).toBeInTheDocument();
+    expect(screen.getByText('Згенерувати AI')).toBeInTheDocument();
+    expect(screen.getByText('Валідувати')).toBeInTheDocument();
+    expect(screen.getByText('Відправити')).toBeInTheDocument();
+  });
+
+  it('should generate AI proposal', async () => {
+    const mockGenerateProposal = jest.fn().mockResolvedValue({
+      content: 'Generated content',
+      aiDisclosureIncluded: true
+    });
     
-    const { getByText, findByText } = render(<DashboardComponent />);
+    render(<ProposalEditor jobId={mockJobId} onGenerateProposal={mockGenerateProposal} />);
     
-    // Перевіряємо завантаження
-    expect(getByText('Loading...')).toBeInTheDocument();
+    const generateButton = screen.getByText('Згенерувати AI');
+    fireEvent.click(generateButton);
     
-    // Перевіряємо відображення даних
-    await findByText('Доходи за місяць');
-    expect(getByText('15000')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockGenerateProposal).toHaveBeenCalledWith({
+        jobId: mockJobId,
+        includeDisclosure: true
+      });
+    });
+  });
+
+  it('should validate proposal content', async () => {
+    const mockValidateProposal = jest.fn().mockResolvedValue({
+      isValid: true,
+      errors: []
+    });
+    
+    render(<ProposalEditor jobId={mockJobId} onValidateProposal={mockValidateProposal} />);
+    
+    const validateButton = screen.getByText('Валідувати');
+    fireEvent.click(validateButton);
+    
+    await waitFor(() => {
+      expect(mockValidateProposal).toHaveBeenCalled();
+    });
   });
 });
-```
-
----
-
-## Моніторинг
-
-### Метрики веб-інтерфейсу
-
-```typescript
-class WebInterfaceMetrics {
-  private analytics: Analytics;
-  
-  constructor() {
-    this.analytics = new Analytics();
-  }
-  
-  trackPageView(page: string): void {
-    this.analytics.track('page_view', { page });
-  }
-  
-  trackUserAction(action: string, data: any): void {
-    this.analytics.track('user_action', { action, ...data });
-  }
-  
-  trackError(error: Error, context: string): void {
-    this.analytics.track('error', {
-      message: error.message,
-      stack: error.stack,
-      context
-    });
-  }
-  
-  trackPerformance(metric: string, value: number): void {
-    this.analytics.track('performance', { metric, value });
-  }
-}
-```
-
-### Логування веб-інтерфейсу
-
-```typescript
-class WebInterfaceLogger {
-  private logger: Logger;
-  
-  constructor() {
-    this.logger = new Logger('web_interface');
-  }
-  
-  logUserAction(userId: string, action: string, data: any): void {
-    this.logger.info('User action', {
-      userId,
-      action,
-      data,
-      timestamp: new Date().toISOString()
-    });
-  }
-  
-  logError(error: Error, context: string): void {
-    this.logger.error('Web interface error', {
-      message: error.message,
-      stack: error.stack,
-      context,
-      timestamp: new Date().toISOString()
-    });
-  }
-  
-  logPerformance(metric: string, value: number): void {
-    this.logger.info('Performance metric', {
-      metric,
-      value,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
-```
-
----
-
-## Чек-лист реалізації
-
-### Безпека
-- [ ] Валідація вхідних даних
-- [ ] Очищення вихідних даних
-- [ ] CORS налаштування
-- [ ] Заголовки безпеки
-- [ ] Захист від XSS та CSRF
-
-### Функціональність
-- [ ] Реактивний інтерфейс на React.js
-- [ ] State management
-- [ ] Real-time оновлення
-- [ ] Адаптивний дизайн
-- [ ] Інтерактивні графіки
-
-### Тестування
-- [ ] Unit тести для компонентів
-- [ ] Unit тести для API клієнта
-- [ ] Integration тести для дашборду
-- [ ] Тести продуктивності
-- [ ] Тести доступності
-
-### Моніторинг
-- [ ] Метрики використання
-- [ ] Метрики продуктивності
-- [ ] Логування помилок
-- [ ] Аналітика користувачів
-- [ ] Відстеження помилок
-
----
-
-**Версія**: 1.0.0 
+``` 

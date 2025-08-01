@@ -103,6 +103,21 @@ tools/
 ./tools/scripts/health-check.sh detailed
 ```
 
+### **run_tests.sh** - Запуск тестів
+```bash
+# Всі тести
+./tools/scripts/testing/run_tests.sh
+
+# Конкретні типи тестів
+./tools/scripts/testing/run_tests.sh backend
+./tools/scripts/testing/run_tests.sh frontend
+./tools/scripts/testing/run_tests.sh coverage
+./tools/scripts/testing/run_tests.sh full
+
+# Допомога
+./tools/scripts/testing/run_tests.sh help
+```
+
 ---
 
 ## CI/CD
